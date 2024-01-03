@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "order_id": {
+      "type": ["integer", "null"]
+    },
+    "product_id": {
+      "type": ["integer", "null"]
+    },
+    "item_number": {
+      "type": ["string", "null"]
+    },
+    "item_name": {
+      "type": ["string", "null"]
+    },
+    "price": {
+      "type": ["number", "null"]
+    },
+    "cost": {
+      "type": ["number", "null"]
+    },
+    "quantity": {
+      "type": ["integer", "null"]
+    },
+    "is_discount_item": {
+      "type": ["boolean", "null"]
+    },
+    "weight": {
+      "type": ["number", "null"]
+    },
+    "is_taxable": {
+      "type": ["boolean", "null"]
+    },
+    "weigh_unit": {
+      "type": ["string", "null"]
+    },
+    "parent_order_item_id": {
+      "type": ["integer", "null"]
+    },
+    "is_quantity_bound_to_parent": {
+      "type": ["boolean", "null"]
+    },
+    "updated_at": {
+      "type": ["string", "null"]
+    },
+    "created_at": {
+      "type": ["string", "null"]
+    },
+    "height": {
+      "type": ["number", "null"]
+    },
+    "length": {
+      "type": ["number", "null"]
+    },
+    "width": {
+      "type": ["number", "null"]
+    },
+    "size_unit": {
+      "type": ["string", "null"]
+    },
+    "admin_comments": {
+      "type": ["string", "null"]
+    },
+    "do_not_discount": {
+      "type": ["boolean", "null"]
+    },
+    "line_item_note": {
+      "type": ["string", "null"]
+    },
+    "gift_message": {
+      "type": ["string", "null"]
+    },
+    "delivery_date": {
+      "type": ["string", "null"]
+    },
+    "is_subscription_product": {
+      "type": ["boolean", "null"]
+    },
+    "warehouse_id": {
+      "type": ["integer", "null"]
+    },
+    "configuration": {
+      "type": ["string", "null"]
+    },
+    "description": {
+      "type": ["string", "null"]
+    },
+    "discount_amount": {
+      "type": ["number", "null"]
+    },
+    "discount_percentage": {
+      "type": ["number", "null"]
+    },
+    "fitment": {
+      "type": ["string", "null"]
+    },
+    "is_non_shipping_item": {
+      "type": ["boolean", "null"]
+    },
+    "item_number_full": {
+      "type": ["string", "null"]
+    },
+    "order_shipping_address_id": {
+      "type": ["string", "null"]
+    },
+    "personalizations": {
+      "type": ["array", "null"]
+    },
+    "selected_shipping_method": {
+      "type": ["string", "null"]
+    },
+    "selected_shipping_method_id": {
+      "type": ["string", "null"]
+    },
+    "selected_shipping_provider_service": {
+      "type": ["string", "null"]
+    },
+    "shipping_total": {
+      "type": ["string", "null"]
+    },
+    "status": {
+      "type": ["string", "null"]
+    },
+    "tax": {
+      "type": ["number", "null"]
+    },
+    "tax_code": {
+      "type": ["string", "null"]
+    },
+    "variant_inventory_id": {
+      "type": ["string", "null"]
+    },
+    "shipping_classification_code": {
+      "type": ["string", "null"]
+    },
+    "variants": {
+      "type": ["array", "null"]
+    },
+    "vendor_store_id": {
+      "type": ["integer", "null"]
+    },
+    "weight_unit": {
+      "type": ["string", "null"]
+    }
+  }
+}

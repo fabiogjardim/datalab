@@ -1,0 +1,57 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+plugins {
+    id 'airbyte-docker-legacy'
+    id 'airbyte-python'
+}
+
+dependencies {
+    project(':airbyte-cdk:java:airbyte-cdk:acceptance-test-harness')
+}
+
+// we need to access the sshtunneling script from airbyte-workers for ssh support
+def copySshScript = tasks.register('copySshScript', Copy) {
+    from "${project(':airbyte-cdk:java:airbyte-cdk:acceptance-test-harness').buildDir}/resources/main"
+    into "${buildDir}"
+    include "sshtunneling.sh"
+}
+copySshScript.configure {
+    dependsOn project(':airbyte-cdk:java:airbyte-cdk:acceptance-test-harness').tasks.named('processResources')
+}
+
+// make sure the copy task above worked (if it fails, it fails silently annoyingly)
+def checkSshScriptCopy = tasks.register('checkSshScriptCopy') {
+    doFirst {
+        assert file("${buildDir}/sshtunneling.sh").exists() :
+                "Copy of sshtunneling.sh failed, check that it is present in airbyte-workers."
+    }
+}
+checkSshScriptCopy.configure {
+    dependsOn copySshScript
+}
+
+def generate = tasks.register('generate')
+generate.configure {
+    dependsOn checkSshScriptCopy
+}
+
+tasks.named('check').configure {
+    dependsOn generate
+}
+
+[
+        'bigquery',
+        'mysql',
+        'postgres',
+        'redshift',
+        'snowflake',
+        'oracle',
+        'mssql',
+        'clickhouse',
+        'tidb',
+        'duckdb',
+].each {destinationName ->
+    tasks.matching { it.name == 'integrationTestPython' }.configureEach {
+        dependsOn project(":airbyte-integrations:connectors:destination-$destinationName").tasks.named('assemble')
+    }
+}

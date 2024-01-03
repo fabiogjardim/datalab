@@ -1,0 +1,124 @@
+2023-12-15 02:40:53 [32mINFO[m i.a.w.ApplicationInitializer(configureTemporal):322 - Configuring Temporal....
+2023-12-15 02:40:53 [32mINFO[m i.a.c.t.TemporalUtils(configureTemporalNamespace):130 - Workflow execution TTL differs for namespace default. Changing from (1 day) to (30 days). 
+2023-12-15 02:40:58 [32mINFO[m i.a.w.ApplicationInitializer(registerWorkerFactory):182 - Registering worker factories....
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerGetSpec):278 - Get Spec Workflow registered.
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerCheckConnection):231 - Check Connection Workflow registered.
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerDiscover):264 - Discover Workflow registered.
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):291 - Registering sync workflow for task queue 'SYNC'...
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):301 - Sync Workflow registered.
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerConnectionManager):247 - Connection Manager Workflow registered.
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(registerNotification):209 - registering new notification workflow
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):149 - Starting worker factory...
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="NOTIFY", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="SYNC", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="SYNC", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="SYNC", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="GET_SPEC", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@b9a581e34761}
+2023-12-15 02:40:59 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):152 - Application initialized.
+2023-12-15 02:40:59 [32mINFO[m i.m.r.Micronaut(lambda$start$2):98 - Startup completed in 19480ms. Server Running: http://b9a581e34761:9000
+2023-12-15 02:45:13 [32mINFO[m i.a.w.ApplicationInitializer(configureTemporal):322 - Configuring Temporal....
+2023-12-15 02:45:13 [32mINFO[m i.a.c.t.TemporalUtils(configureTemporalNamespace):123 - Workflow execution TTL already set for namespace default. Remains unchanged as: 30 days
+2023-12-15 02:45:18 [32mINFO[m i.a.w.ApplicationInitializer(registerWorkerFactory):182 - Registering worker factories....
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerGetSpec):278 - Get Spec Workflow registered.
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerCheckConnection):231 - Check Connection Workflow registered.
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerDiscover):264 - Discover Workflow registered.
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):291 - Registering sync workflow for task queue 'SYNC'...
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):301 - Sync Workflow registered.
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerConnectionManager):247 - Connection Manager Workflow registered.
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(registerNotification):209 - registering new notification workflow
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):149 - Starting worker factory...
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="NOTIFY", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="SYNC", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="SYNC", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="SYNC", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="GET_SPEC", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@2c9b04d62fd3}
+2023-12-15 02:45:19 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):152 - Application initialized.
+2023-12-15 02:45:19 [32mINFO[m i.m.r.Micronaut(lambda$start$2):98 - Startup completed in 22552ms. Server Running: http://2c9b04d62fd3:9000
+2023-12-15 02:51:57 [32mINFO[m i.a.w.ApplicationInitializer(configureTemporal):322 - Configuring Temporal....
+2023-12-15 02:51:57 [32mINFO[m i.a.c.t.TemporalUtils(configureTemporalNamespace):123 - Workflow execution TTL already set for namespace default. Remains unchanged as: 30 days
+2023-12-15 02:52:02 [32mINFO[m i.a.w.ApplicationInitializer(registerWorkerFactory):182 - Registering worker factories....
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerGetSpec):278 - Get Spec Workflow registered.
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerCheckConnection):231 - Check Connection Workflow registered.
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerDiscover):264 - Discover Workflow registered.
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):291 - Registering sync workflow for task queue 'SYNC'...
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):301 - Sync Workflow registered.
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerConnectionManager):247 - Connection Manager Workflow registered.
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(registerNotification):209 - registering new notification workflow
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):149 - Starting worker factory...
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="NOTIFY", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="SYNC", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="SYNC", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="SYNC", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="GET_SPEC", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@1ce8ed090a2b}
+2023-12-15 02:52:03 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):152 - Application initialized.
+2023-12-15 02:52:03 [32mINFO[m i.m.r.Micronaut(lambda$start$2):98 - Startup completed in 20694ms. Server Running: http://1ce8ed090a2b:9000
+2023-12-15 12:45:42 [32mINFO[m i.a.w.ApplicationInitializer(configureTemporal):322 - Configuring Temporal....
+2023-12-15 12:45:43 [32mINFO[m i.a.c.t.TemporalUtils(configureTemporalNamespace):123 - Workflow execution TTL already set for namespace default. Remains unchanged as: 30 days
+2023-12-15 12:45:48 [32mINFO[m i.a.w.ApplicationInitializer(registerWorkerFactory):182 - Registering worker factories....
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerGetSpec):278 - Get Spec Workflow registered.
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerCheckConnection):231 - Check Connection Workflow registered.
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerDiscover):264 - Discover Workflow registered.
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):291 - Registering sync workflow for task queue 'SYNC'...
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerSync):301 - Sync Workflow registered.
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerConnectionManager):247 - Connection Manager Workflow registered.
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(registerNotification):209 - registering new notification workflow
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):149 - Starting worker factory...
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="DISCOVER_SCHEMA", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="NOTIFY", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="NOTIFY", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CONNECTION_UPDATER", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="CHECK_CONNECTION", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="SYNC", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="SYNC", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="SYNC", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Workflow Poller taskQueue="GET_SPEC", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Local Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.t.i.w.Poller(start):91 - start: Poller{name=Activity Poller taskQueue="GET_SPEC", namespace="default", identity=1@7fc9088226cf}
+2023-12-15 12:45:49 [32mINFO[m i.a.w.ApplicationInitializer(onApplicationEvent):152 - Application initialized.
+2023-12-15 12:45:49 [32mINFO[m i.m.r.Micronaut(lambda$start$2):98 - Startup completed in 36258ms. Server Running: http://7fc9088226cf:9000

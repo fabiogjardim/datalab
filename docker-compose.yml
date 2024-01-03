@@ -1,0 +1,1311 @@
+version: '3.7'
+
+############################
+## MINIO DEFAULT
+x-minio-common: &minio-common
+  image: quay.io/minio/minio:RELEASE.2023-12-07T04-16-00Z
+  command: server --console-address ":9001" http://minio{1...3}/data{1...2}
+  expose:
+    - "9000"
+    - "9001"
+  environment:
+    MINIO_ROOT_USER: admin
+    MINIO_ROOT_PASSWORD: admin
+  healthcheck:
+    test: ["CMD", "mc", "ready", "local"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+############################
+## AIRFLOW DEFAULT
+x-airflow-common:
+  &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.7.3}
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin@db/airflow
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin@db/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://admin:admin@db/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/config:/opt/airflow/config
+    - ./airflow/plugins:/opt/airflow/plugins
+  user: "${AIRFLOW_UID:-50000}:0"
+ 
+
+services:
+##################################################
+### MINIO
+  minio1:
+    <<: *minio-common
+    hostname: minio1
+    container_name: minio1
+    volumes:
+      - ./minio/data1-1:/data1
+      - ./minio/data1-2:/data2
+
+  minio2:
+    <<: *minio-common
+    hostname: minio2
+    container_name: minio2
+    volumes:
+      - ./minio/data2-1:/data1
+      - ./minio/data2-2:/data2
+
+  minio3:
+    <<: *minio-common
+    hostname: minio3
+    container_name: minio3
+    volumes:
+      - ./minio/data3-1:/data1
+      - ./minio/data3-2:/data2
+
+  minio:
+    image: nginx:1.19.2-alpine
+    hostname: minio
+    volumes:
+      - ./minio/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+
+##################################################
+### KAFKA
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.2
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-server:7.5.2
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.2
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "18081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  connect:
+    image: cnfldemos/cp-server-connect-datagen:0.6.2-7.5.0
+    hostname: connect
+    container_name: connect
+    depends_on:
+      - broker
+      - schema-registry
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      # CLASSPATH required due to CC-2422
+      CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-7.5.2.jar
+      CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
+      CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.5.2
+    hostname: control-center
+    container_name: control-center
+    depends_on:
+      - broker
+      - schema-registry
+      - connect
+      - ksqldb-server
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: 'connect:8083'
+      CONTROL_CENTER_KSQL_KSQLDB1_URL: "http://ksqldb-server:8088"
+      CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL: "http://localhost:8088"
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:7.5.2
+    hostname: ksqldb-server
+    container_name: ksqldb-server
+    depends_on:
+      - broker
+      - connect
+    ports:
+      - "18088:8088"
+    environment:
+      KSQL_CONFIG_DIR: "/etc/ksql"
+      KSQL_BOOTSTRAP_SERVERS: "broker:29092"
+      KSQL_HOST_NAME: ksqldb-server
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
+      KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
+      KSQL_KSQL_CONNECT_URL: "http://connect:8083"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_REPLICATION_FACTOR: 1
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: 'true'
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: 'true'
+
+  ksqldb-cli:
+    image: confluentinc/cp-ksqldb-cli:7.5.2
+    container_name: ksqldb-cli
+    depends_on:
+      - broker
+      - connect
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:7.5.2
+    depends_on:
+      - broker
+      - schema-registry
+    ports:
+      - 8082:8082
+    hostname: rest-proxy
+    container_name: rest-proxy
+    environment:
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:29092'
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
+      KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+
+##################################################
+### HADOOP
+
+  namenode:
+    platform: linux/amd64
+    image: apache/hadoop:3
+    hostname: namenode
+    container_name: namenode
+    command: ["hdfs", "namenode"]
+    ports:
+      - 9870:9870
+    env_file:
+      - ./hadoop/config
+    environment:
+        ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+    volumes:
+        - ./hadoop/data/namenode:/data/namenode
+
+  datanode:
+    platform: linux/amd64
+    image: apache/hadoop:3
+    hostname: datanode
+    container_name: datanode
+    command: ["hdfs", "datanode"]
+    env_file:
+      - ./hadoop/config
+    volumes:
+      - ./hadoop/data/datanode:/data/datanode
+
+  resourcemanager:
+    platform: linux/amd64
+    image: apache/hadoop:3
+    hostname: resourcemanager
+    container_name: resourcemanager
+    command: ["yarn", "resourcemanager"]
+    ports:
+       - 28088:8088
+       - 8030:8030
+    env_file:
+      - ./hadoop/config
+    #volumes:
+    #  - ./test.sh:/opt/test.sh
+
+  nodemanager:
+    platform: linux/amd64
+    image: apache/hadoop:3
+    hostname: nodemanager
+    container_name: nodemanager
+    command: ["yarn", "nodemanager"]
+    env_file:
+      - ./hadoop/config
+    ports:
+      - 8042:8042
+
+##################################################
+### NIFI
+
+  nifi:
+      image: apache/nifi:latest
+      container_name: nifi
+      hostname: nifi
+      volumes:
+        - ./nifi/util:/util
+        # mkdir /var/lib/nifi && chown -R 1000:1000 /var/lib/nifi
+        - ./nifi/database_repository:/opt/nifi/nifi-current/database_repository
+        - ./nifi/flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
+        - ./nifi/content_repository:/opt/nifi/nifi-current/content_repository
+        - ./nifi/provenance_repository:/opt/nifi/nifi-current/provenance_repository
+        - ./nifi/state:/opt/nifi/nifi-current/state
+        - ./nifi/logs:/opt/nifi/nifi-current/logs
+        - ./nifi/conf:/opt/nifi/nifi-current/conf
+        
+      environment:
+        #NIFI_WEB_HTTP_PORT: "9090"
+        #NIFI_WEB_HTTPS_HOST: "nifi"
+        NIFI_WEB_HTTPS_PORT: '8443'
+        SINGLE_USER_CREDENTIALS_USERNAME: "nifiadmin"
+        SINGLE_USER_CREDENTIALS_PASSWORD: "nifiadmin2023"
+        #NIFI_SENSITIVE_PROPS_KEY: '12345678901234567890A'
+        KEYSTORE_PATH: /util/datalab.com.br/keystore.jks 
+        KEYSTORE_TYPE: JKS 
+        KEYSTORE_PASSWORD: 3pAVuvbDGK0EKq+MaKQWnlkWoPkWZEUf87Ihzuk/jp4 
+        TRUSTSTORE_PATH: /util/datalab.com.br/truststore.jks 
+        TRUSTSTORE_PASSWORD: Zj2RZaetCpYHkpqJsPGhB8VeoIcf6T4qFrbrEGiCtDo
+        ########## JVM ##########
+        # -Xms
+        #   The initial JVM heap size.
+        #NIFI_JVM_HEAP_INIT: 512m
+
+        # -Xmx
+        #   The maximum JVM heap size.
+        #NIFI_JVM_HEAP_MAX: 512m
+        
+        # -Xdebug
+        #   The JVM Debugger can be enabled by setting this environment variable to any value.
+        #NIFI_JVM_DEBUGGER: ''
+      ports:
+        - 8443:8443
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redi
+    expose:
+      - 6379
+    ports:
+        - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 50
+      start_period: 30s
+    restart: always      
+
+##################################################
+### PRESTO
+  presto:
+    platform: linux/amd64
+    image: prestodb
+    hostname: presto
+    container_name: presto
+    volumes: 
+      - ./presto/etc/catalog:/opt/presto-server/etc/catalog/
+      - ./presto/etc/catalog:/opt/presto/etc/catalog/
+      - ./presto/etc/catalog:/etc/catalog/  
+    ports:
+      - 18080:8080
+
+##################################################
+### POSTGRESQL
+  db:
+    image: postgres
+    container_name: db
+    hostname: db
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: admin
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200
+    ports:
+      - 15432:5432
+    volumes:
+      - ./postgres/volume:/var/lib/postgresql/data
+      - ./postgres/util:/util
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    hostname: adminer
+    ports:
+      - 28080:8080
+
+##################################################
+### MONGO
+  mongo:
+    image: mongo
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb/data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - 28081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/
+
+##################################################
+### METABASE
+
+  metabase:
+      image: metabase/metabase:latest
+      container_name: metabase
+      hostname: metabase
+      ports:
+        - 3000:3000
+      depends_on:
+        - db
+      environment:
+        MB_DB_TYPE: postgres
+        MB_DB_DBNAME: metabase
+        MB_DB_PORT: 5432
+        MB_DB_PASS: admin
+        MB_DB_USER: admin
+        MB_DB_HOST: db
+        MB_PASSWORD_COMPLEXITY: "weak"
+        MB_PASSWORD_LENGTH: 4
+      healthcheck:
+        test: curl --fail -I http://localhost:3000/api/health || exit 1
+        interval: 15s
+        timeout: 5s
+        retries: 5
+
+##################################################
+### HIVE
+  hive:
+    hostname: hive
+    image: apache/hive:4.0.0-beta-1
+    #image: fjardim/mds-hive
+    container_name: hive
+    environment:
+      AWS_ACCESS_KEY_ID: datalake
+      AWS_SECRET_ACCESS_KEY: datalake
+      HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
+      SERVICE_NAME: hiveserver2
+      SERVICE_OPTS: "-Dhive.metastore.uris=thrift://metastore:9083" 
+      IS_RESUME: "true"
+      #HIVE_VERSION: "3.1.3"
+    ports:
+       - "10000:10000"
+       - "10002:10002"
+    depends_on:
+        - metastore
+    user: root
+    volumes:
+       - ./hive/conf:/hive_custom_conf
+       - ./hive:/util
+
+  metastore:
+    hostname: metastore
+    #image: fjardim/mds-hive-metastore
+    image: apache/hive:4.0.0-beta-1
+    container_name: metastore
+    environment:
+      AWS_ACCESS_KEY_ID: datalake
+      AWS_SECRET_ACCESS_KEY: datalake
+      HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
+      SERVICE_NAME: metastore
+      #SERVICE_OPTS: "-Dhive.metastore.uris=thrift://metastore:9083" 
+      IS_RESUME: "true"
+      DB_DRIVER: postgres 
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://db:5432/metastore -Djavax.jdo.option.ConnectionUserName=admin -Djavax.jdo.option.ConnectionPassword=admin" 
+    ports:
+       - "9083:9083"
+    depends_on: 
+      - db
+    user: root
+    volumes:
+       - ./hive/meta:/opt/hive/data/warehouse 
+       - ./hive/conf:/hive_custom_conf
+       - ./hive:/util
+       - ./hive/libs/postgresql-42.7.1.jar:/opt/hive/lib/postgresql-42.7.1.jar:ro
+##################################################
+### ELASTIC
+  elasticsearch:
+    image: elasticsearch:8.11.3
+    container_name: elasticsearch
+    hostname: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      discovery.type: "single-node"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+      #ELASTIC_PASSWORD: "12345"
+      xpack.security.enabled: "false"
+    volumes:
+      - ./elasticsearch/esdata:/usr/share/elasticsearch/data
+      
+  kibana:
+    image: kibana:8.11.3
+    container_name: kibana
+    hostname: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      #ELASTICSEARCH_USERNAME: "elastic"
+      #ELASTICSEARCH_PASSWORD: "12345"
+      #ELASTICSEARCH_SERVICEACCOUNTTOKEN: "GgXkNtUyT2CjF5k_488JcA"
+
+    depends_on:
+      - elasticsearch
+##################################################
+### SUPERSET
+  superset:
+    env_file: ./superset/docker/env-non-dev
+    image: fjardim/mds-superset
+    container_name: superset
+    hostname: superset
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    user: "root"
+    ports:
+      - 38088:8088
+    depends_on: 
+      - db
+      #- redis
+      - presto
+    volumes: 
+      - ./superset/docker:/app/docker
+      - ./superset/superset_home:/app/superset_home
+      
+##################################################
+### SPARK
+  spark-master:
+    image: fjardim/mds-spark
+    hostname: spark-master
+    container_name: spark-master
+    command: 
+      - /bin/sh
+      - -c
+      - |
+        /usr/local/spark/sbin/start-master.sh
+        start-notebook.sh --NotebookApp.token=''
+    #environment:
+    #  PYSPARK_SUBMIT_ARGS: "--packages io.delta:delta-core_2.12:2.2.0,org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.12.392"
+    #env_file:
+    #  - ./data/jupyter/jupyter.env
+    #working_dir: /home/root
+    #entrypoint: ["chmod", "+x", "/env/start-master.sh","/env","./start-master.sh"]
+    ports:
+      - 8889:8888
+      - 4040:4040
+      - 4041:4041
+      - 4042:4042
+      - 4043:4043
+      - 38080:8080
+      - 7077:7077
+    volumes:
+      - ./spark/util:/util/
+      - ./spark/work:/home/user 
+      - ./spark/env:/env 
+      - ./scripts:/scripts
+    #environment:
+    #  - GRANT_SUDO=yes
+    #  - CHOWN_HOME=yes
+    #  - NB_USER=spark
+    #  - NB_GID=100
+    #  - CHOWN_HOME_OPTS='-R'
+      #- GEN_CERT=yes
+
+    #   SPARK_MASTER: local[*]
+    #   JUPYTER_PORT: 8889
+    #deploy:
+    #  resources:
+    #    limits:
+    #      memory: 500m
+
+  spark-worker:
+    image: fjardim/mds-spark
+    hostname: spark-worker
+    container_name: spark-worker
+    #command: start-notebook.sh --NotebookApp.token='' 
+    command: 
+      - /bin/sh
+      - -c
+      - |
+        /usr/local/spark/sbin/start-worker.sh spark-master:7077
+        start-notebook.sh --NotebookApp.token='' 
+    #command: /usr/local/spark/sbin/start-worker.sh jupyter-spark:7077
+    #environment:
+    #  PYSPARK_SUBMIT_ARGS: "--packages io.delta:delta-core_2.12:2.2.0,org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.12.392"
+    env_file:
+      - ./spark/env/jupyter.env
+    #working_dir: /home/root
+    ports:
+      - 5040:4040
+      - 5041:4041
+      - 5042:4042
+      - 5043:4043
+      - 38081:8081
+      - 36533:36533
+    volumes:
+      - ./spark/util:/util/
+      - ./spark/work:/home/user 
+      - ./scripts:/scripts
+    environment:
+      SPARK_MASTER: spark-master
+    depends_on:
+        - spark-master
+    #deploy:
+    #  resources:
+    #    limits:
+    #      memory: 1g
+
+##################################################
+### AIRBYTE
+  airbyte-worker:
+    image: airbyte/worker:0.50.38
+    container_name: airbyte-worker
+    environment:
+      - AIRBYTE_VERSION=.50.38
+      - AUTO_DETECT_SCHEMA=true
+      - AUTO_DISABLE_FAILING_CONNECTIONS=false
+      - CONFIGS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=0.40.23.002
+      - CONFIG_DATABASE_PASSWORD=admin
+      - CONFIG_DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+      - CONFIG_DATABASE_USER=admin
+      - CONFIG_ROOT=/data
+      - DATABASE_PASSWORD=admin
+      - DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+      - DATABASE_USER=admin
+      - FEATURE_FLAG_CLIENT=config
+      - INTERNAL_API_HOST=airbyte-server:8001
+      - JOBS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=0.40.26.001
+      - JOB_ERROR_REPORTING_STRATEGY=logging
+      - LOCAL_DOCKER_MOUNT=/tmp/airbyte_local
+      - LOCAL_ROOT=/tmp/airbyte_local
+      - LOG_LEVEL=INFO
+      - MAX_CHECK_WORKERS=5
+      - MAX_DISCOVER_WORKERS=5
+      - MAX_NOTIFY_WORKERS=5
+      - MAX_SPEC_WORKERS=5
+      - MAX_SYNC_WORKERS=5
+      - MICRONAUT_ENVIRONMENTS=control-plane
+      - OTEL_COLLECTOR_ENDPOINT="http://host.docker.internal:4317"
+      - PUBLISH_METRICS=false
+      - SECRET_PERSISTENCE=TESTING_CONFIG_DB_TABLE
+      - SEGMENT_WRITE_KEY=7UDdp5K55CyiGgsauOr2pNNujGvmhaeu
+      - SHOULD_RUN_NOTIFY_WORKFLOWS=true
+      - SYNC_JOB_INIT_RETRY_TIMEOUT_MINUTES=5
+      - SYNC_JOB_MAX_ATTEMPTS=3
+      - SYNC_JOB_MAX_TIMEOUT_DAYS=3
+      - TEMPORAL_HOST=airbyte-temporal:7233
+      - TRACKING_STRATEGY=segment
+      - WEBAPP_URL=http://localhost:8000/
+      - WORKSPACE_DOCKER_MOUNT=airbyte_workspace
+      - WORKSPACE_ROOT=/tmp/workspace
+    configs:
+      - flags
+    volumes:
+      - ./airbyte/var/run/docker.sock:/var/run/docker.sock
+      - ./airbyte/workspace:/tmp/workspace
+      - ./airbyte/local:/airbyte/local
+    ports:
+      - "19000:9000"
+    
+  airbyte-server:
+    image: airbyte/server:0.50.38
+    container_name: airbyte-server
+    environment:
+      - AIRBYTE_ROLE=${AIRBYTE_ROLE:-}
+      - AIRBYTE_VERSION=0.50.38
+      - AUTO_DETECT_SCHEMA=true
+      - CONFIGS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=0.40.23.002
+      - CONFIG_DATABASE_PASSWORD=admin
+      - CONFIG_DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+      - CONFIG_DATABASE_USER=admin
+      - CONFIG_ROOT=/data
+      - DATABASE_PASSWORD=admin
+      - DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+      - DATABASE_USER=admin
+      - FEATURE_FLAG_CLIENT=config
+      - JOBS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=0.40.26.001
+      - JOB_ERROR_REPORTING_STRATEGY=logging
+      - LOG_LEVEL=INFO
+      - MAX_NOTIFY_WORKERS=5
+      - MICRONAUT_ENVIRONMENTS=control-plane
+      - PUBLISH_METRICS=false
+      - SECRET_PERSISTENCE=TESTING_CONFIG_DB_TABLE
+      - SEGMENT_WRITE_KEY=7UDdp5K55CyiGgsauOr2pNNujGvmhaeu
+      - SHOULD_RUN_NOTIFY_WORKFLOWS=true
+      - TEMPORAL_HOST=airbyte-temporal:7233
+      - TRACKING_STRATEGY=segment
+      - WEBAPP_URL=http://localhost:8000/
+      - WORKSPACE_ROOT=/tmp/workspace
+    ports:
+      - "18001:8001"
+    configs:
+      - flags
+    volumes:
+      - ./airbyte/workspace:/tmp/workspace
+      - ./airbyte/data:/data
+      - ./airbyte/local:/airbyte/local
+      - ./airbyte/configs:/app/configs:ro
+    
+  airbyte-webapp:
+    image: airbyte/webapp:0.50.38
+    container_name: airbyte-webapp
+    environment:
+      - INTERNAL_API_HOST=airbyte-server:8001
+      - CONNECTOR_BUILDER_API_HOST=airbyte-connector-builder-server:80
+      - TRACKING_STRATEGY=segment
+      - KEYCLOAK_INTERNAL_HOST=localhost # placeholder to ensure the webapp's nginx config is valid
+    
+  airbyte-temporal:
+    image: airbyte/temporal:0.50.38
+    container_name: airbyte-temporal
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+      - LOG_LEVEL=INFO
+      - POSTGRES_PWD=admin
+      - POSTGRES_SEEDS=db
+      - POSTGRES_USER=admin
+      - DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+    volumes:
+      - ./airbyte/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
+    
+  airbyte-cron:
+    image: airbyte/cron:0.50.38
+    container_name: airbyte-cron
+    environment:
+      - AIRBYTE_VERSION=0.50.38
+      - CONFIGS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=0.40.23.002
+      - DATABASE_PASSWORD=admin
+      - DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+      - DATABASE_USER=admin
+      - LOG_LEVEL=INFO
+      - MICRONAUT_ENVIRONMENTS=control-plane
+      - PUBLISH_METRICS=$false
+      - SEGMENT_WRITE_KEY=7UDdp5K55CyiGgsauOr2pNNujGvmhaeu
+      - TRACKING_STRATEGY=segment
+      - WORKSPACE_ROOT=/tmp/workspace
+    configs:
+      - flags
+    volumes:
+      - ./airbyte/workspace:/tmp/workspace
+    
+  airbyte-api-server:
+    image: airbyte/airbyte-api-server:0.50.38
+    container_name: airbyte-api-server
+    ports:
+      - "18006:8006"
+    environment:
+      - AIRBYTE_VERSION=0.50.38
+      - INTERNAL_API_HOST=http://airbyte-server:8001
+      - AIRBYTE_API_HOST=airbyte-api-server:8006
+      - LOG_LEVEL=INFO
+      - SEGMENT_WRITE_KEY=7UDdp5K55CyiGgsauOr2pNNujGvmhaeu
+      - TRACKING_STRATEGY=segment
+    
+  airbyte-connector-builder-server:
+    image: airbyte/connector-builder-server:0.50.38
+    container_name: airbyte-connector-builder-server
+    restart: unless-stopped
+    ports:
+      - 80
+    environment:
+      - AIRBYTE_VERSION=0.50.38
+      - SEGMENT_WRITE_KEY=7UDdp5K55CyiGgsauOr2pNNujGvmhaeu
+      - TRACKING_STRATEGY=segment
+  
+  airbyte-proxy:
+    image: airbyte/proxy:0.50.38
+    container_name: airbyte-proxy
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8003:8003"
+      - "8006:8006"
+    environment:
+      - BASIC_AUTH_USERNAME=airbyte
+      - BASIC_AUTH_PASSWORD=airbyte
+      - BASIC_AUTH_PROXY_TIMEOUT=900
+    depends_on:
+      - airbyte-webapp
+      - airbyte-server
+      - airbyte-worker
+      - airbyte-temporal
+      - airbyte-cron
+      - airbyte-api-server
+      - airbyte-connector-builder-server
+      - db
+  # init:
+  #   image: airbyte/init:0.50.38
+  #   container_name: init
+  #   command: /bin/sh -c "./scripts/create_mount_directories.sh /local_parent /tmp /tmp/airbyte_local"
+  #   environment:
+  #     - LOCAL_ROOT=/tmp/airbyte_local
+  #     - HACK_LOCAL_ROOT_PARENT=/tmp
+  #   volumes:
+  #     - ./airbyte/tmp:/local_parent
+  # bootloader:
+  #   image: airbyte/bootloader:0.50.38
+  #   container_name: airbyte-bootloader
+  #   environment:
+  #     - AIRBYTE_VERSION=0.50.38
+  #     - DATABASE_PASSWORD=admin
+  #     - DATABASE_URL=jdbc:postgresql://db:5432/airbyte
+  #     - DATABASE_USER=admin
+  #     - LOG_LEVEL=INFO
+  #   depends_on:
+  #     init:
+  #       condition: service_completed_successfully
+    
+  #execute-migrate-all:
+    # container_name: execute_migrate_all
+    # image: docker.getcollate.io/openmetadata/server:1.1.2
+    # command: "./bootstrap/bootstrap_storage.sh migrate-all"
+    # environment:
+    #   OPENMETADATA_CLUSTER_NAME: ${OPENMETADATA_CLUSTER_NAME:-openmetadata}
+    #   SERVER_PORT: ${SERVER_PORT:-8585}
+    #   SERVER_ADMIN_PORT: ${SERVER_ADMIN_PORT:-8586}
+    #   LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+    #   # Migration 
+    #   MIGRATION_LIMIT_PARAM: ${MIGRATION_LIMIT_PARAM:-1200}
+
+    #   # OpenMetadata Server Authentication Configuration
+    #   AUTHORIZER_CLASS_NAME: ${AUTHORIZER_CLASS_NAME:-org.openmetadata.service.security.DefaultAuthorizer}
+    #   AUTHORIZER_REQUEST_FILTER: ${AUTHORIZER_REQUEST_FILTER:-org.openmetadata.service.security.JwtFilter}
+    #   AUTHORIZER_ADMIN_PRINCIPALS: ${AUTHORIZER_ADMIN_PRINCIPALS:-[admin]}
+    #   AUTHORIZER_ALLOWED_REGISTRATION_DOMAIN: ${AUTHORIZER_ALLOWED_REGISTRATION_DOMAIN:-["all"]}
+    #   AUTHORIZER_INGESTION_PRINCIPALS: ${AUTHORIZER_INGESTION_PRINCIPALS:-[ingestion-bot]}
+    #   AUTHORIZER_PRINCIPAL_DOMAIN: ${AUTHORIZER_PRINCIPAL_DOMAIN:-"openmetadata.org"}
+    #   AUTHORIZER_ENFORCE_PRINCIPAL_DOMAIN: ${AUTHORIZER_ENFORCE_PRINCIPAL_DOMAIN:-false}
+    #   AUTHORIZER_ENABLE_SECURE_SOCKET: ${AUTHORIZER_ENABLE_SECURE_SOCKET:-false}
+    #   AUTHENTICATION_PROVIDER: ${AUTHENTICATION_PROVIDER:-basic}
+    #   CUSTOM_OIDC_AUTHENTICATION_PROVIDER_NAME: ${CUSTOM_OIDC_AUTHENTICATION_PROVIDER_NAME:-""}
+    #   AUTHENTICATION_PUBLIC_KEYS: ${AUTHENTICATION_PUBLIC_KEYS:-[http://localhost:8585/api/v1/system/config/jwks]}
+    #   AUTHENTICATION_AUTHORITY: ${AUTHENTICATION_AUTHORITY:-https://accounts.google.com}
+    #   AUTHENTICATION_CLIENT_ID: ${AUTHENTICATION_CLIENT_ID:-""}
+    #   AUTHENTICATION_CALLBACK_URL: ${AUTHENTICATION_CALLBACK_URL:-""}
+    #   AUTHENTICATION_JWT_PRINCIPAL_CLAIMS: ${AUTHENTICATION_JWT_PRINCIPAL_CLAIMS:-[email,preferred_username,sub]}
+    #   AUTHENTICATION_ENABLE_SELF_SIGNUP: ${AUTHENTICATION_ENABLE_SELF_SIGNUP:-true}
+
+    #   # JWT Configuration
+    #   RSA_PUBLIC_KEY_FILE_PATH: ${RSA_PUBLIC_KEY_FILE_PATH:-"./conf/public_key.der"}
+    #   RSA_PRIVATE_KEY_FILE_PATH: ${RSA_PRIVATE_KEY_FILE_PATH:-"./conf/private_key.der"}
+    #   JWT_ISSUER: ${JWT_ISSUER:-"open-metadata.org"}
+    #   JWT_KEY_ID: ${JWT_KEY_ID:-"Gb389a-9f76-gdjs-a92j-0242bk94356"}
+    #   # OpenMetadata Server Pipeline Service Client Configuration
+    #   PIPELINE_SERVICE_CLIENT_ENDPOINT: ${PIPELINE_SERVICE_CLIENT_ENDPOINT:-http://ingestion:8080}
+    #   PIPELINE_SERVICE_CLIENT_HEALTH_CHECK_INTERVAL: ${PIPELINE_SERVICE_CLIENT_HEALTH_CHECK_INTERVAL:-300}
+    #   SERVER_HOST_API_URL: ${SERVER_HOST_API_URL:-http://openmetadata-server:8585/api}
+    #   PIPELINE_SERVICE_CLIENT_VERIFY_SSL: ${PIPELINE_SERVICE_CLIENT_VERIFY_SSL:-"no-ssl"}
+    #   PIPELINE_SERVICE_CLIENT_SSL_CERT_PATH: ${PIPELINE_SERVICE_CLIENT_SSL_CERT_PATH:-""}
+    #   # Database configuration for MySQL
+    #   DB_DRIVER_CLASS: "org.postgresql.Driver"
+    #   DB_SCHEME: "postgresql"
+    #   DB_USE_SSL: "false"
+    #   DB_USER: "admin"
+    #   DB_USER_PASSWORD: "admin"
+    #   DB_HOST: "db"
+    #   DB_PORT: "5432"
+    #   OM_DATABASE: "openmetadata"
+    #   # ElasticSearch Configurations
+    #   ELASTICSEARCH_HOST: ${ELASTICSEARCH_HOST:- elasticsearch}
+    #   ELASTICSEARCH_PORT: ${ELASTICSEARCH_PORT:-9200}
+    #   ELASTICSEARCH_SCHEME: ${ELASTICSEARCH_SCHEME:-http}
+    #   ELASTICSEARCH_USER: ${ELASTICSEARCH_USER:-""}
+    #   ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD:-""}
+    #   SEARCH_TYPE: ${SEARCH_TYPE:- "elasticsearch"}
+    #   ELASTICSEARCH_TRUST_STORE_PATH: ${ELASTICSEARCH_TRUST_STORE_PATH:-""}
+    #   ELASTICSEARCH_TRUST_STORE_PASSWORD: ${ELASTICSEARCH_TRUST_STORE_PASSWORD:-""}
+    #   ELASTICSEARCH_CONNECTION_TIMEOUT_SECS: ${ELASTICSEARCH_CONNECTION_TIMEOUT_SECS:-5}
+    #   ELASTICSEARCH_SOCKET_TIMEOUT_SECS: ${ELASTICSEARCH_SOCKET_TIMEOUT_SECS:-60}
+    #   ELASTICSEARCH_KEEP_ALIVE_TIMEOUT_SECS: ${ELASTICSEARCH_KEEP_ALIVE_TIMEOUT_SECS:-600}
+    #   ELASTICSEARCH_BATCH_SIZE: ${ELASTICSEARCH_BATCH_SIZE:-10}
+    #   ELASTICSEARCH_INDEX_MAPPING_LANG: ${ELASTICSEARCH_INDEX_MAPPING_LANG:-EN}
+
+    #   #eventMonitoringConfiguration
+    #   EVENT_MONITOR: ${EVENT_MONITOR:-prometheus}
+    #   EVENT_MONITOR_BATCH_SIZE: ${EVENT_MONITOR_BATCH_SIZE:-10}
+    #   EVENT_MONITOR_PATH_PATTERN: ${EVENT_MONITOR_PATH_PATTERN:-["/api/v1/tables/*", "/api/v1/health-check"]}
+    #   EVENT_MONITOR_LATENCY: ${EVENT_MONITOR_LATENCY:-[]}
+
+    #   #pipelineServiceClientConfiguration
+    #   PIPELINE_SERVICE_CLIENT_CLASS_NAME: ${PIPELINE_SERVICE_CLIENT_CLASS_NAME:-"org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient"}
+    #   PIPELINE_SERVICE_IP_INFO_ENABLED: ${PIPELINE_SERVICE_IP_INFO_ENABLED:-false}
+    #   PIPELINE_SERVICE_CLIENT_HOST_IP: ${PIPELINE_SERVICE_CLIENT_HOST_IP:-""}
+    #   PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER: ${PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER:-"noop"}
+    #   #airflow parameters
+    #   AIRFLOW_USERNAME: "airflow"
+    #   AIRFLOW_PASSWORD: "airflow"
+    #   AIRFLOW_TIMEOUT: ${AIRFLOW_TIMEOUT:-10}
+    #   AIRFLOW_TRUST_STORE_PATH: ${AIRFLOW_TRUST_STORE_PATH:-""}
+    #   AIRFLOW_TRUST_STORE_PASSWORD: ${AIRFLOW_TRUST_STORE_PASSWORD:-""}
+    #   FERNET_KEY: ${FERNET_KEY:-jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA=}
+
+    #   #secretsManagerConfiguration
+    #   SECRET_MANAGER: ${SECRET_MANAGER:-noop}
+    #   #parameters:
+    #   OM_SM_REGION: ${OM_SM_REGION:-""}
+    #   OM_SM_ACCESS_KEY_ID: ${OM_SM_ACCESS_KEY_ID:-""}
+    #   OM_SM_ACCESS_KEY: ${OM_SM_ACCESS_KEY:-""}
+
+    #   #email configuration:
+    #   OM_EMAIL_ENTITY: ${OM_EMAIL_ENTITY:-"OpenMetadata"}
+    #   OM_SUPPORT_URL: ${OM_SUPPORT_URL:-"https://slack.open-metadata.org"}
+    #   AUTHORIZER_ENABLE_SMTP : ${AUTHORIZER_ENABLE_SMTP:-false}
+    #   OPENMETADATA_SERVER_URL: ${OPENMETADATA_SERVER_URL:-""}
+    #   OPENMETADATA_SMTP_SENDER_MAIL: ${OPENMETADATA_SMTP_SENDER_MAIL:-""}
+    #   SMTP_SERVER_ENDPOINT: ${SMTP_SERVER_ENDPOINT:-""}
+    #   SMTP_SERVER_PORT: ${SMTP_SERVER_PORT:-""}
+    #   SMTP_SERVER_USERNAME: ${SMTP_SERVER_USERNAME:-""}
+    #   SMTP_SERVER_PWD: ${SMTP_SERVER_PWD:-""}
+    #   SMTP_SERVER_STRATEGY: ${SMTP_SERVER_STRATEGY:-"SMTP_TLS"}
+
+    #   #changeEventConfig
+    #   OM_URI: ${OM_URI:- "http://localhost:8585"}
+
+    #   #extensionConfiguration
+    #   OM_RESOURCE_PACKAGES: ${OM_RESOURCE_PACKAGES:-[]}
+    #   OM_EXTENSIONS: ${OM_EXTENSIONS:-[]}
+
+
+    #   # Heap OPTS Configurations
+    #   OPENMETADATA_HEAP_OPTS: ${OPENMETADATA_HEAP_OPTS:--Xmx1G -Xms1G}
+    #   # Application Config
+    #   OM_CUSTOM_LOGO_URL_PATH: ${OM_CUSTOM_LOGO_URL_PATH:-""}
+    #   OM_CUSTOM_MONOGRAM_URL_PATH: ${OM_CUSTOM_MONOGRAM_URL_PATH:-""}
+    #   OM_MAX_FAILED_LOGIN_ATTEMPTS: ${OM_MAX_FAILED_LOGIN_ATTEMPTS:-3}
+    #   OM_LOGIN_ACCESS_BLOCK_TIME: ${OM_LOGIN_ACCESS_BLOCK_TIME:-600}
+    #   OM_JWT_EXPIRY_TIME: ${OM_JWT_EXPIRY_TIME:-3600}
+    #   # Mask passwords values in UI
+    #   MASK_PASSWORDS_API: ${MASK_PASSWORDS_API:-false}
+
+    #   #OpenMetadata Web Configuration
+    #   WEB_CONF_URI_PATH: ${WEB_CONF_URI_PATH:-"/api"}
+    #   #HSTS
+    #   WEB_CONF_HSTS_ENABLED: ${WEB_CONF_HSTS_ENABLED:-false}
+    #   WEB_CONF_HSTS_MAX_AGE: ${WEB_CONF_HSTS_MAX_AGE:-"365 days"}
+    #   WEB_CONF_HSTS_INCLUDE_SUBDOMAINS: ${WEB_CONF_HSTS_INCLUDE_SUBDOMAINS:-"true"}
+    #   WEB_CONF_HSTS_PRELOAD: ${WEB_CONF_HSTS_PRELOAD:-"true"}
+    #   #Frame Options
+    #   WEB_CONF_FRAME_OPTION_ENABLED: ${WEB_CONF_FRAME_OPTION_ENABLED:-false}
+    #   WEB_CONF_FRAME_OPTION: ${WEB_CONF_FRAME_OPTION:-"SAMEORIGIN"}
+    #   WEB_CONF_FRAME_ORIGIN: ${WEB_CONF_FRAME_ORIGIN:-""}
+    #   #Content Type
+    #   WEB_CONF_CONTENT_TYPE_OPTIONS_ENABLED: ${WEB_CONF_CONTENT_TYPE_OPTIONS_ENABLED:-false}
+    #   #XSS-Protection  
+    #   WEB_CONF_XSS_PROTECTION_ENABLED: ${WEB_CONF_XSS_PROTECTION_ENABLED:-false}
+    #   WEB_CONF_XSS_PROTECTION_ON: ${WEB_CONF_XSS_PROTECTION_ON:-true}
+    #   WEB_CONF_XSS_PROTECTION_BLOCK: ${WEB_CONF_XSS_PROTECTION_BLOCK:-true}
+    #   #CSP    
+    #   WEB_CONF_XSS_CSP_ENABLED: ${WEB_CONF_XSS_CSP_ENABLED:-false}
+    #   WEB_CONF_XSS_CSP_POLICY: ${WEB_CONF_XSS_CSP_POLICY:-"default-src 'self'"}
+    #   WEB_CONF_XSS_CSP_REPORT_ONLY_POLICY: ${WEB_CONF_XSS_CSP_REPORT_ONLY_POLICY:-""}
+    #   #Referrer-Policy
+    #   WEB_CONF_REFERRER_POLICY_ENABLED: ${WEB_CONF_REFERRER_POLICY_ENABLED:-false}
+    #   WEB_CONF_REFERRER_POLICY_OPTION: ${WEB_CONF_REFERRER_POLICY_OPTION:-"SAME_ORIGIN"}
+    #   #Permission-Policy
+    #   WEB_CONF_PERMISSION_POLICY_ENABLED: ${WEB_CONF_PERMISSION_POLICY_ENABLED:-false}
+    #   WEB_CONF_PERMISSION_POLICY_OPTION: ${WEB_CONF_PERMISSION_POLICY_OPTION:-""}
+    
+
+
+  openmetadata-server:
+    container_name: openmetadata_server
+    restart: always
+    image: docker.getcollate.io/openmetadata/server:1.1.2
+    environment:
+      OPENMETADATA_CLUSTER_NAME: ${OPENMETADATA_CLUSTER_NAME:-openmetadata}
+      SERVER_PORT: ${SERVER_PORT:-8585}
+      SERVER_ADMIN_PORT: ${SERVER_ADMIN_PORT:-8586}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+      # OpenMetadata Server Authentication Configuration
+      AUTHORIZER_CLASS_NAME: ${AUTHORIZER_CLASS_NAME:-org.openmetadata.service.security.DefaultAuthorizer}
+      AUTHORIZER_REQUEST_FILTER: ${AUTHORIZER_REQUEST_FILTER:-org.openmetadata.service.security.JwtFilter}
+      AUTHORIZER_ADMIN_PRINCIPALS: ${AUTHORIZER_ADMIN_PRINCIPALS:-[admin]}
+      AUTHORIZER_ALLOWED_REGISTRATION_DOMAIN: ${AUTHORIZER_ALLOWED_REGISTRATION_DOMAIN:-["all"]}
+      AUTHORIZER_INGESTION_PRINCIPALS: ${AUTHORIZER_INGESTION_PRINCIPALS:-[ingestion-bot]}
+      AUTHORIZER_PRINCIPAL_DOMAIN: ${AUTHORIZER_PRINCIPAL_DOMAIN:-"openmetadata.org"}
+      AUTHORIZER_ENFORCE_PRINCIPAL_DOMAIN: ${AUTHORIZER_ENFORCE_PRINCIPAL_DOMAIN:-false}
+      AUTHORIZER_ENABLE_SECURE_SOCKET: ${AUTHORIZER_ENABLE_SECURE_SOCKET:-false}
+      AUTHENTICATION_PROVIDER: ${AUTHENTICATION_PROVIDER:-basic}
+      CUSTOM_OIDC_AUTHENTICATION_PROVIDER_NAME: ${CUSTOM_OIDC_AUTHENTICATION_PROVIDER_NAME:-""}
+      AUTHENTICATION_PUBLIC_KEYS: ${AUTHENTICATION_PUBLIC_KEYS:-[http://localhost:8585/api/v1/system/config/jwks]}
+      AUTHENTICATION_AUTHORITY: ${AUTHENTICATION_AUTHORITY:-https://accounts.google.com}
+      AUTHENTICATION_CLIENT_ID: ${AUTHENTICATION_CLIENT_ID:-""}
+      AUTHENTICATION_CALLBACK_URL: ${AUTHENTICATION_CALLBACK_URL:-""}
+      AUTHENTICATION_JWT_PRINCIPAL_CLAIMS: ${AUTHENTICATION_JWT_PRINCIPAL_CLAIMS:-[email,preferred_username,sub]}
+      AUTHENTICATION_ENABLE_SELF_SIGNUP: ${AUTHENTICATION_ENABLE_SELF_SIGNUP:-true}
+
+      # JWT Configuration
+      RSA_PUBLIC_KEY_FILE_PATH: ${RSA_PUBLIC_KEY_FILE_PATH:-"./conf/public_key.der"}
+      RSA_PRIVATE_KEY_FILE_PATH: ${RSA_PRIVATE_KEY_FILE_PATH:-"./conf/private_key.der"}
+      JWT_ISSUER: ${JWT_ISSUER:-"open-metadata.org"}
+      JWT_KEY_ID: ${JWT_KEY_ID:-"Gb389a-9f76-gdjs-a92j-0242bk94356"}
+      # OpenMetadata Server Pipeline Service Client Configuration
+      PIPELINE_SERVICE_CLIENT_ENDPOINT: ${PIPELINE_SERVICE_CLIENT_ENDPOINT:-http://ingestion:8080}
+      PIPELINE_SERVICE_CLIENT_HEALTH_CHECK_INTERVAL: ${PIPELINE_SERVICE_CLIENT_HEALTH_CHECK_INTERVAL:-300}
+      SERVER_HOST_API_URL: ${SERVER_HOST_API_URL:-http://openmetadata-server:8585/api}
+      PIPELINE_SERVICE_CLIENT_VERIFY_SSL: ${PIPELINE_SERVICE_CLIENT_VERIFY_SSL:-"no-ssl"}
+      PIPELINE_SERVICE_CLIENT_SSL_CERT_PATH: ${PIPELINE_SERVICE_CLIENT_SSL_CERT_PATH:-""}
+      # Database configuration for MySQL
+      DB_DRIVER_CLASS: "org.postgresql.Driver"
+      DB_SCHEME: "postgresql"
+      DB_USE_SSL: "false"
+      DB_USER: "admin"
+      DB_USER_PASSWORD: "admin"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      OM_DATABASE: "openmetadata"
+      # ElasticSearch Configurations
+      ELASTICSEARCH_HOST: ${ELASTICSEARCH_HOST:- elasticsearch}
+      ELASTICSEARCH_PORT: ${ELASTICSEARCH_PORT:-9200}
+      ELASTICSEARCH_SCHEME: ${ELASTICSEARCH_SCHEME:-http}
+      ELASTICSEARCH_USER: ${ELASTICSEARCH_USER:-""}
+      ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD:-""}
+      SEARCH_TYPE: ${SEARCH_TYPE:- "elasticsearch"}
+      ELASTICSEARCH_TRUST_STORE_PATH: ${ELASTICSEARCH_TRUST_STORE_PATH:-""}
+      ELASTICSEARCH_TRUST_STORE_PASSWORD: ${ELASTICSEARCH_TRUST_STORE_PASSWORD:-""}
+      ELASTICSEARCH_CONNECTION_TIMEOUT_SECS: ${ELASTICSEARCH_CONNECTION_TIMEOUT_SECS:-5}
+      ELASTICSEARCH_SOCKET_TIMEOUT_SECS: ${ELASTICSEARCH_SOCKET_TIMEOUT_SECS:-60}
+      ELASTICSEARCH_KEEP_ALIVE_TIMEOUT_SECS: ${ELASTICSEARCH_KEEP_ALIVE_TIMEOUT_SECS:-600}
+      ELASTICSEARCH_BATCH_SIZE: ${ELASTICSEARCH_BATCH_SIZE:-10}
+      ELASTICSEARCH_INDEX_MAPPING_LANG: ${ELASTICSEARCH_INDEX_MAPPING_LANG:-EN}
+
+      #eventMonitoringConfiguration
+      EVENT_MONITOR: ${EVENT_MONITOR:-prometheus}
+      EVENT_MONITOR_BATCH_SIZE: ${EVENT_MONITOR_BATCH_SIZE:-10}
+      EVENT_MONITOR_PATH_PATTERN: ${EVENT_MONITOR_PATH_PATTERN:-["/api/v1/tables/*", "/api/v1/health-check"]}
+      EVENT_MONITOR_LATENCY: ${EVENT_MONITOR_LATENCY:-[]}
+
+      #pipelineServiceClientConfiguration
+      PIPELINE_SERVICE_CLIENT_CLASS_NAME: ${PIPELINE_SERVICE_CLIENT_CLASS_NAME:-"org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient"}
+      PIPELINE_SERVICE_IP_INFO_ENABLED: ${PIPELINE_SERVICE_IP_INFO_ENABLED:-false}
+      PIPELINE_SERVICE_CLIENT_HOST_IP: ${PIPELINE_SERVICE_CLIENT_HOST_IP:-""}
+      PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER: ${PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER:-"noop"}
+      #airflow parameters
+      AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-admin}
+      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
+      AIRFLOW_TIMEOUT: ${AIRFLOW_TIMEOUT:-10}
+      AIRFLOW_TRUST_STORE_PATH: ${AIRFLOW_TRUST_STORE_PATH:-""}
+      AIRFLOW_TRUST_STORE_PASSWORD: ${AIRFLOW_TRUST_STORE_PASSWORD:-""}
+      FERNET_KEY: ${FERNET_KEY:-jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA=}
+
+      #secretsManagerConfiguration
+      SECRET_MANAGER: ${SECRET_MANAGER:-noop}
+      #parameters:
+      OM_SM_REGION: ${OM_SM_REGION:-""}
+      OM_SM_ACCESS_KEY_ID: ${OM_SM_ACCESS_KEY_ID:-""}
+      OM_SM_ACCESS_KEY: ${OM_SM_ACCESS_KEY:-""}
+      
+      #email configuration:
+      OM_EMAIL_ENTITY: ${OM_EMAIL_ENTITY:-"OpenMetadata"}
+      OM_SUPPORT_URL: ${OM_SUPPORT_URL:-"https://slack.open-metadata.org"}
+      AUTHORIZER_ENABLE_SMTP : ${AUTHORIZER_ENABLE_SMTP:-false}
+      OPENMETADATA_SERVER_URL: ${OPENMETADATA_SERVER_URL:-""}
+      OPENMETADATA_SMTP_SENDER_MAIL: ${OPENMETADATA_SMTP_SENDER_MAIL:-""}
+      SMTP_SERVER_ENDPOINT: ${SMTP_SERVER_ENDPOINT:-""}
+      SMTP_SERVER_PORT: ${SMTP_SERVER_PORT:-""}
+      SMTP_SERVER_USERNAME: ${SMTP_SERVER_USERNAME:-""}
+      SMTP_SERVER_PWD: ${SMTP_SERVER_PWD:-""}
+      SMTP_SERVER_STRATEGY: ${SMTP_SERVER_STRATEGY:-"SMTP_TLS"}
+
+      #changeEventConfig
+      OM_URI: ${OM_URI:- "http://localhost:8585"}
+
+      #extensionConfiguration
+      OM_RESOURCE_PACKAGES: ${OM_RESOURCE_PACKAGES:-[]}
+      OM_EXTENSIONS: ${OM_EXTENSIONS:-[]}
+
+
+      # Heap OPTS Configurations
+      OPENMETADATA_HEAP_OPTS: ${OPENMETADATA_HEAP_OPTS:--Xmx1G -Xms1G}
+      # Application Config
+      OM_CUSTOM_LOGO_URL_PATH: ${OM_CUSTOM_LOGO_URL_PATH:-""}
+      OM_CUSTOM_MONOGRAM_URL_PATH: ${OM_CUSTOM_MONOGRAM_URL_PATH:-""}
+      OM_MAX_FAILED_LOGIN_ATTEMPTS: ${OM_MAX_FAILED_LOGIN_ATTEMPTS:-3}
+      OM_LOGIN_ACCESS_BLOCK_TIME: ${OM_LOGIN_ACCESS_BLOCK_TIME:-600}
+      OM_JWT_EXPIRY_TIME: ${OM_JWT_EXPIRY_TIME:-3600}
+      # Mask passwords values in UI
+      MASK_PASSWORDS_API: ${MASK_PASSWORDS_API:-false}
+      
+      #OpenMetadata Web Configuration
+      WEB_CONF_URI_PATH: ${WEB_CONF_URI_PATH:-"/api"}
+      #HSTS
+      WEB_CONF_HSTS_ENABLED: ${WEB_CONF_HSTS_ENABLED:-false}
+      WEB_CONF_HSTS_MAX_AGE: ${WEB_CONF_HSTS_MAX_AGE:-"365 days"}
+      WEB_CONF_HSTS_INCLUDE_SUBDOMAINS: ${WEB_CONF_HSTS_INCLUDE_SUBDOMAINS:-"true"}
+      WEB_CONF_HSTS_PRELOAD: ${WEB_CONF_HSTS_PRELOAD:-"true"}
+      #Frame Options
+      WEB_CONF_FRAME_OPTION_ENABLED: ${WEB_CONF_FRAME_OPTION_ENABLED:-false}
+      WEB_CONF_FRAME_OPTION: ${WEB_CONF_FRAME_OPTION:-"SAMEORIGIN"}
+      WEB_CONF_FRAME_ORIGIN: ${WEB_CONF_FRAME_ORIGIN:-""}
+      #Content Type
+      WEB_CONF_CONTENT_TYPE_OPTIONS_ENABLED: ${WEB_CONF_CONTENT_TYPE_OPTIONS_ENABLED:-false}
+      #XSS-Protection  
+      WEB_CONF_XSS_PROTECTION_ENABLED: ${WEB_CONF_XSS_PROTECTION_ENABLED:-false}
+      WEB_CONF_XSS_PROTECTION_ON: ${WEB_CONF_XSS_PROTECTION_ON:-true}
+      WEB_CONF_XSS_PROTECTION_BLOCK: ${WEB_CONF_XSS_PROTECTION_BLOCK:-true}
+      #CSP    
+      WEB_CONF_XSS_CSP_ENABLED: ${WEB_CONF_XSS_CSP_ENABLED:-false}
+      WEB_CONF_XSS_CSP_POLICY: ${WEB_CONF_XSS_CSP_POLICY:-"default-src 'self'"}
+      WEB_CONF_XSS_CSP_REPORT_ONLY_POLICY: ${WEB_CONF_XSS_CSP_REPORT_ONLY_POLICY:-""}
+      
+    expose:
+      - 8585
+      - 8586
+    ports:
+      - "8585:8585"
+      - "8586:8586"
+    depends_on:
+      - elasticsearch
+      - db
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider",  "http://localhost:8586/healthcheck" ]
+  
+  ingestion:
+    container_name: openmetadata_ingestion
+    image: docker.getcollate.io/openmetadata/ingestion:1.1.2
+    depends_on:
+      - openmetadata-server
+    environment:
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      AIRFLOW_DB: "openmetadata_airflow"
+      DB_SCHEME: "postgresql+psycopg2"
+      DB_USER: "admin"
+      DB_PASSWORD: "admin"
+    entrypoint: /bin/bash
+    command:
+      - "/opt/airflow/ingestion_dependency.sh"
+    ports:
+      - "48080:8080"
+    volumes:
+      - ./openmetadata/dag-airflow:/opt/airflow/dag_generated_configs
+      - ./openmetadata/dags:/opt/airflow/dags
+      - ./openmetadata/mp:/tmp
+
+#############################
+## AIRFLOW
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-webserver
+    hostname: airflow-webserver
+    command: webserver
+    ports:
+      - "58080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - redis
+      - db
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    hostname: airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - redis
+      - db
+
+  airflow-worker:
+    <<: *airflow-common
+    container_name: airflow-worker
+    hostname: airflow-worker
+    command: celery worker
+    healthcheck:
+      # yamllint disable rule:line-length
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      <<: *airflow-common-env
+      # Required to handle warm shutdown of the celery workers properly
+      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
+      DUMB_INIT_SETSID: "0"
+    depends_on:
+      - redis
+      - db
+
+  airflow-triggerer:
+    <<: *airflow-common
+    container_name: airflow-triggerer
+    hostname: airflow-triggerer
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - redis
+      - db
+
+  airflow-cli:
+    <<: *airflow-common
+    container_name: airflow-cli
+    hostname: airflow-cli
+    profiles:
+      - debug
+    environment:
+      <<: *airflow-common-env
+      CONNECTION_CHECK_MAX_COUNT: "0"
+    # Workaround for entrypoint issue. See: https://github.com/apache/airflow/issues/16252
+    command:
+      - bash
+      - -c
+      - airflow
+
+  # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
+  # or by explicitly targeted on the command line e.g. docker-compose up flower.
+  # See: https://docs.docker.com/compose/profiles/
+  airflow-flower:
+    <<: *airflow-common
+    container_name: airflow-flower
+    hostname: airflow-flower
+    command: celery flower
+    profiles:
+      - flower
+    ports:
+      - "5555:5555"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+#############################
+## SCYLLA 
+  scylla:
+    image: scylladb/scylla
+    container_name: scylla
+    hostname: scylla
+    command: --seeds=scylla --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    ports:
+      - "9042:9042"
+      - "9160:9160"
+      - "10001:10000"
+    volumes:
+      - ./scylla/data:/var/lib/scylla
+      - ./scylla/util:/util
+      #- ./scylla/scylla.yaml:/etc/scylla/scylla.yaml
+      #- ./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties
+      #- ./scylla/scylla-manager-agent.conf:/etc/supervisord.conf.d/scylla-manager-agent.conf
+
+#############################
+## CLICKHOUSE
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    container_name: clickhouse
+    hostname: clickhouse
+    ports:
+      - "18123:8123"
+      - "29000:9000"
+    environment:
+      CLICKHOUSE_DB: "datalab"
+      CLICKHOUSE_USER: "admin"
+      CLICKHOUSE_PASSWORD: "admin"
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - ./clickhouse/data:/var/lib/clickhouse/ 
+
+
+
+#############################
+## GENERAL
+
+configs:
+  flags:
+    file: ./airbyte/flags.yml
+
+networks:
+  datalab:
+    driver: bridge
