@@ -3,8 +3,6 @@
 Ambiente para estudo dos principais framework de um ambiente moderno de dados utilizando docker.
  
 
-![mds](image/front.png)
-
 ## SOFTWARES NECESSÁRIOS
 #### Para a criação e uso do ambiente vamos utilizar o git e o Docker 
    * Instalação do Docker Desktop no Windows [Docker Desktop](https://hub.docker.com/editions/community/docker-ce-desktop-windows) ou o docker no [Linux](https://docs.docker.com/install/linux/docker-ce/ubuntu/)

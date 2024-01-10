@@ -1,0 +1,6 @@
+Bem Vindo ao curso de Fast Data com Spark
+Este curso foi feito para iniciantes que desejam trabalhar com Fast Data
+Todos exercios sao feitos de forma simples e focada na teoria
+Inicialemnte teremos exemplos que focan no nucleo
+e posteriomente focamos na principais funcoes de mapper e reducer
+Espero que todos gostem do curso e ate proximo.

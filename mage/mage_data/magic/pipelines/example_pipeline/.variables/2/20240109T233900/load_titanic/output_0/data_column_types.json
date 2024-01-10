@@ -1,0 +1,1 @@
+{"PassengerId": "int64", "Survived": "int64", "Pclass": "int64", "Name": "str", "Sex": "str", "Age": "float64", "SibSp": "int64", "Parch": "int64", "Ticket": "str", "Fare": "float64", "Cabin": "str", "Embarked": "str"}

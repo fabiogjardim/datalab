@@ -1,0 +1,291 @@
+Apache Hadoop ( /həˈduːp/) is a collection of open-source software utilities that facilitate using a network of many computers to solve problems involving massive amounts of data and computation. It provides a software framework for distributed storage and processing of big data using the MapReduce programming model. Originally designed for computer clusters built from commodity hardware[3]—still the common use—it has also found use on clusters of higher-end hardware.[4][5] All the modules in Hadoop are designed with a fundamental assumption that hardware failures are common occurrences and should be automatically handled by the framework.[2]
+
+The core of Apache Hadoop consists of a storage part, known as Hadoop Distributed File System (HDFS), and a processing part which is a MapReduce programming model. Hadoop splits files into large blocks and distributes them across nodes in a cluster. It then transfers packaged code into nodes to process the data in parallel. This approach takes advantage of data locality,[6] where nodes manipulate the data they have access to. This allows the dataset to be processed faster and more efficiently than it would be in a more conventional supercomputer architecture that relies on a parallel file system where computation and data are distributed via high-speed networking.[7][8]
+
+The base Apache Hadoop framework is composed of the following modules:
+
+Hadoop Common – contains libraries and utilities needed by other Hadoop modules;
+Hadoop Distributed File System (HDFS) – a distributed file-system that stores data on commodity machines, providing very high aggregate bandwidth across the cluster;
+Hadoop YARN – introduced in 2012 is a platform responsible for managing computing resources in clusters and using them for scheduling users' applications;[9][10]
+Hadoop MapReduce – an implementation of the MapReduce programming model for large-scale data processing.
+The term Hadoop has come to refer not just to the aforementioned base modules and sub-modules, but also to the ecosystem,[11] or collection of additional software packages that can be installed on top of or alongside Hadoop, such as Apache Pig, Apache Hive, Apache HBase, Apache Phoenix, Apache Spark, Apache ZooKeeper, Cloudera Impala, Apache Flume, Apache Sqoop, Apache Oozie, and Apache Storm.[12]
+
+Apache Hadoop's MapReduce and HDFS components were inspired by Google papers on their MapReduce and Google File System.[13]
+
+The Hadoop framework itself is mostly written in the Java programming language, with some native code in C and command line utilities written as shell scripts. Though MapReduce Java code is common, any programming language can be used with "Hadoop Streaming" to implement the "map" and "reduce" parts of the user's program.[14] Other projects in the Hadoop ecosystem expose richer user interfaces.
+
+
+Contents
+1	History
+1.1	Timeline
+2	Architecture
+2.1	File systems
+2.1.1	Hadoop distributed file system
+2.1.2	Other file systems
+2.2	JobTracker and TaskTracker: the MapReduce engine
+2.2.1	Scheduling
+2.2.1.1	Fair scheduler
+2.2.1.2	Capacity scheduler
+2.3	Difference between Hadoop 1 vs Hadoop 2 (YARN)
+2.4	Difference between Hadoop 2 vs Hadoop 3
+2.5	Other applications
+3	Prominent use cases
+4	Hadoop hosting in the cloud
+4.1	On Microsoft Azure
+4.2	On Amazon EC2/S3 services
+4.3	On Amazon Elastic MapReduce
+4.4	On CenturyLink Cloud (CLC)
+4.5	On Google Cloud Platform
+4.6	On SAP Cloud Platform
+4.7	On Oracle Cloud Platform
+5	Commercial support
+5.1	Branding
+6	Papers
+7	See also
+8	References
+9	Bibliography
+10	External links
+History
+According to its co-founders, Doug Cutting and Mike Cafarella, the genesis of Hadoop was the "Google File System" paper that was published in October 2003.[15][16] This paper spawned another one from Google – "MapReduce: Simplified Data Processing on Large Clusters".[17] Development started on the Apache Nutch project, but was moved to the new Hadoop subproject in January 2006.[18] Doug Cutting, who was working at Yahoo! at the time, named it after his son's toy elephant.[19] The initial code that was factored out of Nutch consisted of about 5,000 lines of code for HDFS and about 6,000 lines of code for MapReduce.
+
+The first committer to add to the Hadoop project was Owen O'Malley (in March 2006);[20] Hadoop 0.1.0 was released in April 2006.[21] It continues to evolve through the many contributions that are being made to the project.[22]
+
+Timeline
+Year	Month	Event	Ref.
+2003	October	Google File System paper released	[23]
+2004	December	MapReduce: Simplified Data Processing on Large Clusters	[24]
+2006	January	Hadoop subproject created with mailing lists, jira, and wiki	[25]
+2006	January	Hadoop is born from Nutch 197	[26]
+2006	February	NDFS+ MapReduce moved out of Apache Nutch to create Hadoop	[27]
+2006	February	Owen O'Malley's first patch goes into Hadoop	[28]
+2006	February	Hadoop is named after Cutting's son's yellow plush toy	[29]
+2006	April	Hadoop 0.1.0 released	[30]
+2006	April	Hadoop sorts 1.8 TB on 188 nodes in 47.9 hours	[27]
+2006	May	Yahoo deploys 300 machine Hadoop cluster	[27]
+2006	October	Yahoo Hadoop cluster reaches 600 machines	[27]
+2007	April	Yahoo runs two clusters of 1,000 machines	[27]
+2007	June	Only three companies on "Powered by Hadoop Page"	[31]
+2007	October	First release of Hadoop that includes HBase	[32]
+2007	October	Yahoo Labs creates Pig, and donates it to the ASF	[33]
+2008	January	YARN JIRA opened	Yarn Jira (Mapreduce 279)
+2008	January	20 companies on "Powered by Hadoop Page"	[31]
+2008	February	Yahoo moves its web index onto Hadoop	[34]
+2008	February	Yahoo! production search index generated by a 10,000-core Hadoop cluster	[27]
+2008	March	First Hadoop Summit	[35]
+2008	April	Hadoop world record fastest system to sort a terabyte of data. Running on a 910-node cluster, Hadoop sorted one terabyte in 209 seconds	[27]
+2008	May	Hadoop wins TeraByte Sort (World Record sortbenchmark.org)	[36]
+2008	July	Hadoop wins Terabyte Sort Benchmark	[37]
+2008	October	Loading 10 TB/day in Yahoo clusters	[27]
+2008	October	Cloudera, Hadoop distributor is founded	[38]
+2008	November	Google MapReduce implementation sorted one terabyte in 68 seconds	[27]
+2009	March	Yahoo runs 17 clusters with 24,000 machines	[27]
+2009	April	Hadoop sorts a petabyte	[39]
+2009	May	Yahoo! used Hadoop to sort one terabyte in 62 seconds	[27]
+2009	June	Second Hadoop Summit	[40]
+2009	July	Hadoop Core is renamed Hadoop Common	[41]
+2009	July	MapR, Hadoop distributor founded	[42]
+2009	July	HDFS now a separate subproject	[41]
+2009	July	MapReduce now a separate subproject	[41]
+2010	January	Kerberos support added to Hadoop	[43]
+2010	May	Apache HBase Graduates	[44]
+2010	June	Third Hadoop Summit	[45]
+2010	June	Yahoo 4,000 nodes/70 petabytes	[46]
+2010	June	Facebook 2,300 clusters/40 petabytes	[46]
+2010	September	Apache Hive Graduates	[47]
+2010	September	Apache Pig Graduates	[48]
+2011	January	Apache Zookeeper Graduates	[49]
+2011	January	Facebook, LinkedIn, eBay and IBM collectively contribute 200,000 lines of code	[50]
+2011	March	Apache Hadoop takes top prize at Media Guardian Innovation Awards	[51]
+2011	June	Rob Beardon and Eric Badleschieler spin out Hortonworks out of Yahoo.	[52]
+2011	June	Yahoo has 42K Hadoop nodes and hundreds of petabytes of storage	[52]
+2011	June	Third Annual Hadoop Summit (1,700 attendees)	[53]
+2011	October	Debate over which company had contributed more to Hadoop.	[50]
+2012	January	Hadoop community moves to separate from MapReduce and replace with YARN	[29]
+2012	June	San Jose Hadoop Summit (2,100 attendees)	[54]
+2012	November	Apache Hadoop 1.0 Available	[41]
+2013	March	Hadoop Summit – Amsterdam (500 attendees)	[55]
+2013	March	YARN deployed in production at Yahoo	[56]
+2013	June	San Jose Hadoop Summit (2,700 attendees)	[57]
+2013	October	Apache Hadoop 2.2 Available	[41]
+2014	February	Apache Hadoop 2.3 Available	[41]
+2014	February	Apache Spark top Level Apache Project	[58]
+2014	April	Hadoop summit Amsterdam (750 attendees)	[59]
+2014	June	Apache Hadoop 2.4 Available	[41]
+2014	June	San Jose Hadoop Summit (3,200 attendees)	[60]
+2014	August	Apache Hadoop 2.5 Available	[41]
+2014	November	Apache Hadoop 2.6 Available	[41]
+2015	April	Hadoop Summit Europe	[61]
+2015	June	Apache Hadoop 2.7 Available	[41]
+2017	March	Apache Hadoop 2.8 Available	[62]
+2017	November	Apache Hadoop 2.9 Available	[63]
+2017	December	Apache Hadoop 3.0 Available	[64]
+2018	April	Apache Hadoop 3.1 Available	[65]
+Architecture
+See also: Hadoop Distributed File System, Apache HBase, and MapReduce
+Hadoop consists of the Hadoop Common package, which provides file system and operating system level abstractions, a MapReduce engine (either MapReduce/MR1 or YARN/MR2)[66] and the Hadoop Distributed File System (HDFS). The Hadoop Common package contains the Java ARchive (JAR) files and scripts needed to start Hadoop.
+
+For effective scheduling of work, every Hadoop-compatible file system should provide location awareness – the name of the rack (or, more precisely, of the network switch) where a worker node is. Hadoop applications can use this information to execute code on the node where the data is, and, failing that, on the same rack/switch to reduce backbone traffic. HDFS uses this method when replicating data for data redundancy across multiple racks. This approach reduces the impact of a rack power outage or switch failure; if any of these hardware failures occurs, the data will remain available.[67]
+
+Hadoop cluster
+A multi-node Hadoop cluster
+A small Hadoop cluster includes a single master and multiple worker nodes. The master node consists of a Job Tracker, Task Tracker, NameNode, and DataNode. A slave or worker node acts as both a DataNode and TaskTracker, though it is possible to have data-only and compute-only worker nodes. These are normally used only in nonstandard applications.[68]
+
+Hadoop requires Java Runtime Environment (JRE) 1.6 or higher. The standard startup and shutdown scripts require that Secure Shell (SSH) be set up between nodes in the cluster.[69]
+
+In a larger cluster, HDFS nodes are managed through a dedicated NameNode server to host the file system index, and a secondary NameNode that can generate snapshots of the namenode's memory structures, thereby preventing file-system corruption and loss of data. Similarly, a standalone JobTracker server can manage job scheduling across nodes. When Hadoop MapReduce is used with an alternate file system, the NameNode, secondary NameNode, and DataNode architecture of HDFS are replaced by the file-system-specific equivalents.
+
+File systems
+Hadoop distributed file system
+The HDFS is a distributed, scalable, and portable file system written in Java for the Hadoop framework. Some consider it to instead be a data store due to its lack of POSIX compliance,[70] but it does provide shell commands and Java application programming interface (API) methods that are similar to other file systems.[71] A Hadoop cluster has nominally a single namenode plus a cluster of datanodes, although redundancy options are available for the namenode due to its criticality. Each datanode serves up blocks of data over the network using a block protocol specific to HDFS. The file system uses TCP/IP sockets for communication. Clients use remote procedure calls (RPC) to communicate with each other.
+
+HDFS stores large files (typically in the range of gigabytes to terabytes[72]) across multiple machines. It achieves reliability by replicating the data across multiple hosts, and hence theoretically does not require redundant array of independent disks (RAID) storage on hosts (but to increase input-output (I/O) performance some RAID configurations are still useful). With the default replication value, 3, data is stored on three nodes: two on the same rack, and one on a different rack. Data nodes can talk to each other to rebalance data, to move copies around, and to keep the replication of data high. HDFS is not fully POSIX-compliant, because the requirements for a POSIX file-system differ from the target goals of a Hadoop application. The trade-off of not having a fully POSIX-compliant file-system is increased performance for data throughput and support for non-POSIX operations such as Append.[73]
+
+HDFS added the high-availability capabilities, as announced for version 2.0 in May 2012,[74] letting the main metadata server (the NameNode) manually fail-over onto a backup. The project has also started developing automatic fail-overs.
+
+The HDFS file system includes a so-called secondary namenode, a misleading term that some might incorrectly interpret as a backup namenode when the primary namenode goes offline. In fact, the secondary namenode regularly connects with the primary namenode and builds snapshots of the primary namenode's directory information, which the system then saves to local or remote directories. These checkpointed images can be used to restart a failed primary namenode without having to replay the entire journal of file-system actions, then to edit the log to create an up-to-date directory structure. Because the namenode is the single point for storage and management of metadata, it can become a bottleneck for supporting a huge number of files, especially a large number of small files. HDFS Federation, a new addition, aims to tackle this problem to a certain extent by allowing multiple namespaces served by separate namenodes. Moreover, there are some issues in HDFS such as small file issues, scalability problems, Single Point of Failure (SPoF), and bottlenecks in huge metadata requests. One advantage of using HDFS is data awareness between the job tracker and task tracker. The job tracker schedules map or reduce jobs to task trackers with an awareness of the data location. For example: if node A contains data (a, b, c) and node X contains data (x, y, z), the job tracker schedules node A to perform map or reduce tasks on (a, b, c) and node X would be scheduled to perform map or reduce tasks on (x, y, z). This reduces the amount of traffic that goes over the network and prevents unnecessary data transfer. When Hadoop is used with other file systems, this advantage is not always available. This can have a significant impact on job-completion times as demonstrated with data-intensive jobs.[75]
+
+HDFS was designed for mostly immutable files and may not be suitable for systems requiring concurrent write-operations.[73]
+
+HDFS can be mounted directly with a Filesystem in Userspace (FUSE) virtual file system on Linux and some other Unix systems.
+
+File access can be achieved through the native Java API, the Thrift API (generates a client in a number of languages e.g. C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, Cocoa, Smalltalk, and OCaml), the command-line interface, the HDFS-UI web application over HTTP, or via 3rd-party network client libraries.[76]
+
+HDFS is designed for portability across various hardware platforms and for compatibility with a variety of underlying operating systems. The HDFS design introduces portability limitations that result in some performance bottlenecks, since the Java implementation cannot use features that are exclusive to the platform on which HDFS is running.[77] Due to its widespread integration into enterprise-level infrastructure, monitoring HDFS performance at scale has become an increasingly important issue. Monitoring end-to-end performance requires tracking metrics from datanodes, namenodes, and the underlying operating system.[78] There are currently several monitoring platforms to track HDFS performance, including HortonWorks, Cloudera, and Datadog.
+
+Other file systems
+Hadoop works directly with any distributed file system that can be mounted by the underlying operating system by simply using a file:// URL; however, this comes at a price – the loss of locality. To reduce network traffic, Hadoop needs to know which servers are closest to the data, information that Hadoop-specific file system bridges can provide.
+
+In May 2011, the list of supported file systems bundled with Apache Hadoop were:
+
+HDFS: Hadoop's own rack-aware file system.[79] This is designed to scale to tens of petabytes of storage and runs on top of the file systems of the underlying operating systems.
+FTP file system: This stores all its data on remotely accessible FTP servers.
+Amazon S3 (Simple Storage Service) object storage: This is targeted at clusters hosted on the Amazon Elastic Compute Cloud server-on-demand infrastructure. There is no rack-awareness in this file system, as it is all remote.
+Windows Azure Storage Blobs (WASB) file system: This is an extension of HDFS that allows distributions of Hadoop to access data in Azure blob stores without moving the data permanently into the cluster.
+A number of third-party file system bridges have also been written, none of which are currently in Hadoop distributions. However, some commercial distributions of Hadoop ship with an alternative file system as the default – specifically IBM and MapR.
+
+In 2009, IBM discussed running Hadoop over the IBM General Parallel File System.[80] The source code was published in October 2009.[81]
+In April 2010, Parascale published the source code to run Hadoop against the Parascale file system.[82]
+In April 2010, Appistry released a Hadoop file system driver for use with its own CloudIQ Storage product.[83]
+In June 2010, HP discussed a location-aware IBRIX Fusion file system driver.[84]
+In May 2011, MapR Technologies Inc. announced the availability of an alternative file system for Hadoop, MapR FS, which replaced the HDFS file system with a full random-access read/write file system.
+JobTracker and TaskTracker: the MapReduce engine
+Main article: MapReduce
+Atop the file systems comes the MapReduce Engine, which consists of one JobTracker, to which client applications submit MapReduce jobs. The JobTracker pushes work to available TaskTracker nodes in the cluster, striving to keep the work as close to the data as possible. With a rack-aware file system, the JobTracker knows which node contains the data, and which other machines are nearby. If the work cannot be hosted on the actual node where the data resides, priority is given to nodes in the same rack. This reduces network traffic on the main backbone network. If a TaskTracker fails or times out, that part of the job is rescheduled. The TaskTracker on each node spawns a separate Java virtual machine (JVM) process to prevent the TaskTracker itself from failing if the running job crashes its JVM. A heartbeat is sent from the TaskTracker to the JobTracker every few minutes to check its status. The Job Tracker and TaskTracker status and information is exposed by Jetty and can be viewed from a web browser.
+
+Known limitations of this approach are:
+
+The allocation of work to TaskTrackers is very simple. Every TaskTracker has a number of available slots (such as "4 slots"). Every active map or reduce task takes up one slot. The Job Tracker allocates work to the tracker nearest to the data with an available slot. There is no consideration of the current system load of the allocated machine, and hence its actual availability.
+If one TaskTracker is very slow, it can delay the entire MapReduce job – especially towards the end, when everything can end up waiting for the slowest task. With speculative execution enabled, however, a single task can be executed on multiple slave nodes.
+Scheduling
+By default Hadoop uses FIFO scheduling, and optionally 5 scheduling priorities to schedule jobs from a work queue.[85] In version 0.19 the job scheduler was refactored out of the JobTracker, while adding the ability to use an alternate scheduler (such as the Fair scheduler or the Capacity scheduler, described next).[86]
+
+Fair scheduler
+The fair scheduler was developed by Facebook.[87] The goal of the fair scheduler is to provide fast response times for small jobs and Quality of service (QoS) for production jobs. The fair scheduler has three basic concepts.[88]
+
+Jobs are grouped into pools.
+Each pool is assigned a guaranteed minimum share.
+Excess capacity is split between jobs.
+By default, jobs that are uncategorized go into a default pool. Pools have to specify the minimum number of map slots, reduce slots, as well as a limit on the number of running jobs.
+
+Capacity scheduler
+The capacity scheduler was developed by Yahoo. The capacity scheduler supports several features that are similar to those of the fair scheduler.[89]
+
+Queues are allocated a fraction of the total resource capacity.
+Free resources are allocated to queues beyond their total capacity.
+Within a queue, a job with a high level of priority has access to the queue's resources.
+There is no preemption once a job is running.
+
+Difference between Hadoop 1 vs Hadoop 2 (YARN)
+The biggest difference between Hadoop 1 and Hadoop 2 involves YARN technology. In the first version of Hadoop, the core components included Hadoop Common, HDFS, and MapReduce, but the second version of Hadoop came out with a new technology called YARN - an acronym for "Yet Another Resource Negotiator".
+
+YARN, an open source resource management technology, is deployed on a Hadoop cluster. YARN strives to allocate the resources to various applications effectively. It runs two daemons, which take care of two different tasks: job tracking and progress monitoring.
+
+These two daemons are called the resource manager and the application master. The resource manager allocates resources to various applications, and the application master monitors the execution of the process.
+
+Difference between Hadoop 2 vs Hadoop 3
+There are important features provided by Hadoop 3. For example, while there is one single namenode in Hadoop 2, Hadoop 3 enables having multiple name nodes, which solves the single point of failure problem.
+
+In Hadoop 3, there are containers working in principle of Docker, which reduces time spent on application development.
+
+One of the biggest changes is that Hadoop 3 decreases storage overhead with erasure coding.
+
+Also, Hadoop 3 permits usage of GPU hardware within the cluster, which is a very substantial benefit to execute Deep Learning algorithms on a Hadoop cluster.[90]
+
+Other applications
+The HDFS file system is not restricted to MapReduce jobs. It can be used for other applications, many of which are under development at Apache. The list includes the HBase database, the Apache Mahout machine learning system, and the Apache Hive Data Warehouse system. Hadoop can, in theory, be used for any sort of work that is batch-oriented rather than real-time, is very data-intensive, and benefits from parallel processing of data. It can also be used to complement a real-time system, such as lambda architecture, Apache Storm, Flink and Spark Streaming.[91]
+
+As of October 2009, commercial applications of Hadoop[92] included:-
+
+log and/or clickstream analysis of various kinds
+marketing analytics
+machine learning and/or sophisticated data mining
+image processing
+processing of XML messages
+web crawling and/or text processing
+general archiving, including of relational/tabular data, e.g. for compliance
+Prominent use cases
+On February 19, 2008, Yahoo! Inc. launched what they claimed was the world's largest Hadoop production application. The Yahoo! Search Webmap is a Hadoop application that runs on a Linux cluster with more than 10,000 cores and produced data that was used in every Yahoo! web search query.[93] There are multiple Hadoop clusters at Yahoo! and no HDFS file systems or MapReduce jobs are split across multiple data centers. Every Hadoop cluster node bootstraps the Linux image, including the Hadoop distribution. Work that the clusters perform is known to include the index calculations for the Yahoo! search engine. In June 2009, Yahoo! made the source code of its Hadoop version available to the open-source community.[94]
+
+In 2010, Facebook claimed that they had the largest Hadoop cluster in the world with 21 PB of storage.[95] In June 2012, they announced the data had grown to 100 PB[96] and later that year they announced that the data was growing by roughly half a PB per day.[97]
+
+As of 2013, Hadoop adoption had become widespread: more than half of the Fortune 50 used Hadoop.[98]
+
+Hadoop hosting in the cloud
+Hadoop can be deployed in a traditional onsite datacenter as well as in the cloud.[99] The cloud allows organizations to deploy Hadoop without the need to acquire hardware or specific setup expertise.[100] Vendors who currently have an offer for the cloud include Microsoft, Amazon, CenturyLink Cloud , IBM,[101] Google, SAP[102], and Oracle.[103]
+
+On Microsoft Azure
+Azure HDInsight[104] is a service that deploys Hadoop on Microsoft Azure. HDInsight uses Hortonworks HDP and was jointly developed for HDI with Hortonworks. HDI allows programming extensions with .NET (in addition to Java). HDInsight also supports the creation of Hadoop clusters using Linux with Ubuntu.[104] By deploying HDInsight in the cloud, organizations can spin up the number of nodes they want and only get charged for the compute and storage that is used.[104] Hortonworks implementations can also move data from the on-premises datacenter to the cloud for backup, development/test, and bursting scenarios.[104] It is also possible to run Cloudera or Hortonworks Hadoop clusters on Azure Virtual Machines.
+
+On Amazon EC2/S3 services
+It is possible to run Hadoop on Amazon Elastic Compute Cloud (EC2) and Amazon Simple Storage Service (S3).[105] As an example, in 2007 The New York Times used 100 Amazon EC2 instances and a Hadoop application to process 4 TB of raw image TIFF data (stored in S3) into 11 million finished PDFs in the space of 24 hours at a computation cost of about $240 (not including bandwidth).[106]
+
+There is support for the S3 object store in the Apache Hadoop releases, though this is below what one expects from a traditional POSIX filesystem. Specifically, operations such as rename() and delete() on directories are not atomic, and can take time proportional to the number of entries and the amount of data in them.
+
+On Amazon Elastic MapReduce
+Elastic MapReduce (EMR)[107] was introduced by Amazon.com in April 2009. Provisioning of the Hadoop cluster, running and terminating jobs, and handling data transfer between EC2 (VM) and S3 (Object Storage) are automated by Elastic MapReduce. Apache Hive, which is built on top of Hadoop for providing data warehouse services, is also offered in Elastic MapReduce.[108] Support for using Spot Instances[109] was later added in August 2011.[110] Elastic MapReduce is fault-tolerant for slave failures,[111] and it is recommended to only run the Task Instance Group on spot instances to take advantage of the lower cost while maintaining availability.[112]
+
+On CenturyLink Cloud (CLC)
+CenturyLink Cloud[113] offers Hadoop via both a managed and un-managed model.[114] CLC also offers customers several managed Cloudera Blueprints, the newest managed service in the CenturyLink Cloud big data portfolio, which also includes Cassandra and MongoDB solutions.[115]
+
+On Google Cloud Platform
+There are multiple ways to run the Hadoop ecosystem on Google Cloud Platform ranging from self-managed to Google-managed.[116]
+
+Google Cloud Dataproc: a managed Spark and Hadoop service[117]
+command line tools (bdutil): a collection of shell scripts to manually create and manage Spark and Hadoop clusters[118]
+third party Hadoop distributions:
+Cloudera – using the Cloudera Director Plugin for Google Cloud Platform[119]
+Hortonworks – using bdutil support for Hortonworks HDP[120]
+MapR – using bdutil support for MapR[121]
+Google also offers connectors for using other Google Cloud Platform products with Hadoop, such as a Google Cloud Storage connector for using Google Cloud Storage and a Google BigQuery connector for using Google BigQuery.
+
+On SAP Cloud Platform
+The SAP Cloud Platform Big Data Services provide a performance-driven and robust big data framework using Apache Hadoop and Spark.
+
+On Oracle Cloud Platform
+Hadoop is available on Oracle Cloud through the Oracle Big Data Cloud. It provides big data services and deployment models. Big Data Cloud Service and Big Data SQL Cloud Service can be combined with Oracle’s analytics platform. These services can be deployed in Public Cloud and in Hybrid Cloud as Cloud At Customer.
+
+Commercial support
+A number of companies offer commercial implementations or support for Hadoop.[122]
+
+Branding
+The Apache Software Foundation has stated that only software officially released by the Apache Hadoop Project can be called Apache Hadoop or Distributions of Apache Hadoop.[123] The naming of products and derivative works from other vendors and the term "compatible" are somewhat controversial within the Hadoop developer community.[124]
+
+Papers
+Some papers influenced the birth and growth of Hadoop and big data processing. Some of these are:
+
+Jeffrey Dean, Sanjay Ghemawat (2004) MapReduce: Simplified Data Processing on Large Clusters, Google. This paper inspired Doug Cutting to develop an open-source implementation of the Map-Reduce framework. He named it Hadoop, after his son's toy elephant.
+Michael Franklin, Alon Halevy, David Maier (2005) From Databases to Dataspaces: A New Abstraction for Information Management. The authors highlight the need for storage systems to accept all data formats and to provide APIs for data access that evolve based on the storage system's understanding of the data.
+Fay Chang et al. (2006) Bigtable: A Distributed Storage System for Structured Data, Google.
+Robert Kallman et al. (2008) H-store: a high-performance, distributed main memory transaction processing system
+See also
+	Free software portal
+Apache Accumulo – Secure Bigtable[125]
+Apache Cassandra – A column-oriented database that supports access from Hadoop
+Apache CouchDB is a database that uses JSON for documents, JavaScript for MapReduce queries, and regular HTTP for an API
+Big data
+Cloud computing
+Data Intensive Computing
+HPCC – LexisNexis Risk Solutions High Performance Computing Cluster
+Hypertable – HBase alternative
+Sector/Sphere – Open source distributed storage and processing
+Simple Linux Utility for Resource Management

@@ -1,0 +1,8 @@
+blocks:
+  radiant_willow:
+    name: radiant willow
+    type: chart
+    uuid: radiant_willow
+layout:
+- - block_uuid: radiant_willow
+    width: 1

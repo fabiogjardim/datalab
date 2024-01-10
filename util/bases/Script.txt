@@ -1,0 +1,89 @@
+
+CREATE TABLE aula.tabelagerenciada 
+(
+   id INT
+  ,nome STRING
+);
+
+SHOW CREATE TABLE aula.tabelagerenciada;
+
+DROP TABLE aula.tabelagerenciada;
+
+CREATE TABLE aula.tabelagerenciada
+(
+  id INT
+  ,nome STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/hive/aula/tabelagerenciada';
+
+EXPLAIN
+select * from aula.tabelagerenciada;
+
+CREATE EXTERNAL TABLE aula.tabelaexterna
+(
+  id INT
+  ,nome STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/hive/aula/tabelaexterna';
+
+
+select * from aula.tabelagerenciada;
+select * from aula.tabelaexterna;
+
+select * from tabelaexterna
+left join tabelagerenciada 
+  on tabelaexterna.id = tabelagerenciada.id;
+  
+DROP TABLE tabelaexterna;
+DROP TABLE tabelagerenciada;
+
+
+select count(*) from aula.tabelaexterna where id = 2 and nome = '281';
+--6,65s
+select count(*)   from aula.tabelaparquet where id = 2 and nome = '281';
+--2,34
+
+ALTER TABLE aula.tabelaexterna ADD COLUMNS (nota int);
+
+CREATE EXTERNAL TABLE aula.tabelaparquet
+(
+  id int 
+  ,nome STRING 
+
+)
+STORED AS PARQUET
+LOCATION '/hive/aula/tabelaparquet';
+
+insert into aula.tabelaparquet
+select id,nome from aula.tabelaexterna ;
+
+
+
+CREATE external TABLE aula.tabelaparticionada
+(
+  idVenda int,
+  valor FLOAT,
+  idCliente int
+)
+partitioned by (ano int, mes int, dia int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/raw/vendas';
+
+select * from  aula.tabelaparticionada;
+
+MSCK REPAIR TABLE aula.tabelaparticionada;
+
+alter TABLE aula.tabelaparticionada add PARTITION (dt='2023-01-01') location '/raw/vendas/2023-01-01';
+alter TABLE aula.tabelaparticionada add PARTITION (dt='2023-01-02') location '/raw/vendas/2023-01-02';
+alter TABLE aula.tabelaparticionada add PARTITION (dt='2023-01-03') location '/raw/vendas/2023-01-03';
+
+
+select * from  aula.tabelaparticionada where dt between '2023-01-01' and '2023-01-02';
+
+
+insert into aula.tabelaparticionada partition (ano=2023, mes=10, dia=23) values (1,100,2);

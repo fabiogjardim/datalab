@@ -1,0 +1,3 @@
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "frosty_spellcaster"}, "timestamp": 1704835337, "user": null}
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "great_pond"}, "timestamp": 1704842975, "user": null}
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "frosty_sumo"}, "timestamp": 1704844394, "user": null}
