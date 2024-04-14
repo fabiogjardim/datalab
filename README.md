@@ -1,4 +1,4 @@
-# BIG DATA ECOSYSTEM - MODERN DATA STACK COM DOCKER
+# BIG DATA - MODERN DATA STACK COM DOCKER
 
 Ambiente para estudo dos principais framework de um ambiente moderno de dados utilizando docker.
  
@@ -17,7 +17,7 @@ Ambiente para estudo dos principais framework de um ambiente moderno de dados ut
 INICIANDO O AMBIENTE*
 
 #### Em um terminal/DOS/PowerShell, realizar o clone do projeto no github.
-          git clone https://github.com/fabiogjardim/mds.git
+          git clone https://github.com/fabiogjardim/datalab.git
 
 #### Ao realizar o clone do repositório, o diretória mds será criado em sua máquina local.
 
@@ -66,66 +66,39 @@ INICIANDO O AMBIENTE*
 ## Acesso WebUI dos Frameworks
  
 * Minio *http://localhost:9051*
-* Jupyter Spark *http://localhost:8889*
-* Pinot *http://localhost:9000*
-* Nifi *http://localhost:9090*
+* Hadoop *http://localhost:9870*
 * Kafka Control Center *http://localhost:9021*
-* Airflow *http://localhost:8180*
+* Kafka Proxy *http://localhost:8082*
+* Nifi *http://localhost:49090*
+* Airflow *http://localhost:58080*
+* Presto *http://localhost:18080*
+* Adminer *http://localhost:28080*
+* Mongo Express *http://localhost:28081*
+* Hive WebUI *http://localhost:10002*
 * Elastic *http://localhost:9200*
+* Cassandra Web *http://localhost:13000*
+* Jupyter Spark *http://localhost:8889*
 * Metabase *http://localhost:3000*
 * Kibana *http://localhost:5601*
-* Superset *http://localhost:8088*
-* Trino *http://localhost:8080*
-* CloudBeaver *http://localhost:8010*
+* Datahub *http://localhost:9002*
+
 
 ## Usuários e senhas
 
-   ##### Superset
+   ##### Minio
     Usuário: admin
-    Senha: admin
+    Senha: minioadmin
 
    ##### Metabase
-    Usuário: admin@mds.com
-    Senha: admin 
+    Usuário: user@datalab.com
+    Senha: datalab 
 
    ##### Postgres
     Usuário: admin
     Senha: admin
-   
-   ##### Minio
-    Usuário: admin
-    Senha: admin
-       
-   ##### Pinot
-    Usuário: admin
-    Senha: admin
-        
-   ##### Kibana
-    Usuário: admin
-    Senha: admin
-        
-   ##### CloudBeaver
-    Usuário: admin
-    Senha: admin
-   
 
+   
 ## Imagens   
 
 [Docker Hub](https://hub.docker.com/u/fjardim)
 
-## Documentação oficial dos ambientes em container
-
-* [Cloudbeave](https://dbeaver.com/docs/cloudbeaver/Run-Docker-Container/)
-* [Trino](https://trino.io/docs/current/installation/containers.html)
-* [Superset](https://superset.apache.org/docs/installation/installing-superset-using-docker-compose/)
-* [Metabase](https://www.metabase.com/docs/latest/installation-and-operation/running-metabase-on-docker)
-* [DeltaLake](https://delta.io/)
-* [Minio](https://min.io/docs/minio/container/operations/installation.html)
-* [Elastic](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html)
-* [Postgres](https://github.com/docker-library/postgres)
-* [Pinot](https://docs.pinot.apache.org/basics/getting-started/running-pinot-in-docker)
-* [Jupyter Spark](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/specifics.html)
-* [Airflow](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html)
-* [Kafka Confluent](https://docs.confluent.io/platform/current/installation/docker/installation.html)
-* [Debezium](https://debezium.io/documentation/reference/stable/docker.html)
-* [Nifi](https://hub.docker.com/r/apache/nifi)
