@@ -1,0 +1,39 @@
+{
+id: 8288,
+uid: "d0e414a7-7f68-4b5c-a29d-cb5ca21b25cc",
+password: "VmqeSy5f7s",
+first_name: "Isabel",
+last_name: "Blick",
+username: "isabel.blick",
+email: "isabel.blick@email.com",
+avatar: "https://robohash.org/laudantiumvoluptaset.png?size=300x300&set=set1",
+gender: "Polygender",
+phone_number: "+673 1-959-975-6727 x58384",
+social_insurance_number: "992685891",
+date_of_birth: "1967-06-06",
+employment: {
+title: "Internal Mining Associate",
+key_skill: "Leadership"
+},
+address: {
+city: "New Alan",
+street_name: "Altenwerth Groves",
+street_address: "481 Emeline Freeway",
+zip_code: "62201-5509",
+state: "Maine",
+country: "United States",
+coordinates: {
+lat: 24.85947001870558,
+lng: -161.24874389137216
+}
+},
+credit_card: {
+cc_number: "6771-8912-4620-5443"
+},
+subscription: {
+plan: "Basic",
+status: "Idle",
+payment_method: "Apple Pay",
+term: "Full subscription"
+}
+}

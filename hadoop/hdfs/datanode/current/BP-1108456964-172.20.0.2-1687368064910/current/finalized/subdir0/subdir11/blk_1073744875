@@ -1,0 +1,10 @@
+Hadoop é uma plataforma de software em Java de computação distribuída voltada para clusters e processamento de grandes volumes de dados, com atenção a tolerância a falhas. Foi inspirada no MapReduce e no GoogleFS (GFS). Trata-se de um projeto da Apache de alto nível, construído por uma comunidade de contribuidores[1] e utilizando a linguagem de programação Java. O Yahoo! tem sido o maior contribuidor[2] do projeto, utilizando essa plataforma intensivamente em seus negócios.[3]disponibilizado pela Amazon e IBM em suas plataformas.[4][5]
+
+Composição
+O framework do Apache Hadoop é composto dos módulos seguintes na versão 2.2.x:
+
+Hadoop Common - Contém as bibliotecas e arquivos comuns e necessários para todos os módulos Hadoop.
+Hadoop Distributed File System (HDFS) - Sistema de arquivos distribuído que armazena dados em máquinas dentro do cluster, sob demanda, permitindo uma largura de banda muito grande em todo o cluster.
+Hadoop Yarn - Trata-se de uma plataforma de gerenciamento de recursos responsável pelo gerenciamento dos recursos computacionais em cluster, assim como pelo agendamento dos recursos.
+Hadoop MapReduce - Modelo de programação para processamento em larga escala.
+Todos os módulos do Hadoop são desenhados com a premissa fundamental de que falhas em hardware são comuns, sejam elas máquinas individuais ou um conjunto inteiro de máquinas em racks, e devem portanto ser automaticamente tratadas por software pelo framework.

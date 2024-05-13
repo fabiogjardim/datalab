@@ -53,89 +53,40 @@ services:
       retries: 5
 
   namenode:
-    platform: linux/amd64
-    #image: apache/hadoop:3
-    image: fjardim/mds-namenode:3.3.6
-    hostname: namenode
+    image: fjardim/mds-namenode
     container_name: namenode
-    command: ["hdfs", "namenode"]
-    ports:
-      - 9870:9870
-    env_file:
-      - ./hadoop/config
-    environment:
-        ENSURE_NAMENODE_DIR: "/data/dfs/name"
+    hostname: namenode
     volumes:
-        - ./hadoop/data/namenode:/data/dfs/name/
-        - ./util:/util
+      - ./hadoop/hdfs/namenode:/hadoop/dfs/name
+      - ./hadoop/util:/util
+    env_file:
+      - ./hadoop/hadoop.env
+    ports:
+      - "9870:9870"
     deploy:
       resources:
         limits:
           memory: 500m
-          #cpus: '0.2'
-
+  
   datanode:
-    platform: linux/amd64
-    #image: apache/hadoop:3
-    image: fjardim/mds-datanode:3.3.6
-    hostname: datanode
+    image: fjardim/mds-datanode
     container_name: datanode
-    command: ["hdfs", "datanode"]
+    hostname: datanode
+    volumes:
+      - ./hadoop/hdfs/datanode:/hadoop/dfs/data
+      - ./hadoop/util:/util
+    env_file:
+      - ./hadoop/hadoop.env
     environment:
       SERVICE_PRECONDITION: "namenode:9870"
-      ENSURE_DATANODE_DIR:  "/data/dfs/data"
-    env_file:
-      - ./hadoop/config
-    volumes:
-      - ./hadoop/data/datanode:/data/dfs/data/
-      - ./util:/util
     depends_on:
       - namenode
-    deploy:
-      resources:
-        limits:
-          memory: 500m
-          #cpus: '0.2'
-
-  resourcemanager:
-    platform: linux/amd64
-    #image: apache/hadoop:3
-    image: fjardim/mds-resourcemanager:3.3.6
-    hostname: resourcemanager
-    container_name: resourcemanager
-    command: ["yarn", "resourcemanager"]
     ports:
-       - 28088:8088
-       - 8030:8030
-    env_file:
-      - ./hadoop/config
-    volumes:
-      - ./util:/util
+      - "9864:9864"
     deploy:
       resources:
         limits:
           memory: 500m
-          #cpus: '0.2'
-
-  nodemanager:
-    platform: linux/amd64
-    #image: apache/hadoop:3
-    image: fjardim/mds-nodemanager:3.3.6
-    hostname: nodemanager
-    container_name: nodemanager
-    command: ["yarn", "nodemanager"]
-    env_file:
-      - ./hadoop/config
-    ports:
-      - 8042:8042
-    volumes:
-      - ./util:/util
-    deploy:
-      resources:
-        limits:
-          memory: 500m
-          #cpus: '3.0'
-
 ############################
 ## STREAMING
 ############################
