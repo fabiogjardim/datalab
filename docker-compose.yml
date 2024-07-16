@@ -46,11 +46,7 @@ services:
       MINIO_SECRET_KEY: datalake
     volumes:
       - ./minio/data1:/data
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+
 
   namenode:
     image: fjardim/mds-namenode
@@ -418,18 +414,11 @@ services:
     ports:
         - 6379:6379
     volumes:
-      - ./util:/util
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 30s
-      retries: 50
-      start_period: 30s
-    restart: always      
+      - ./util:/util    
 
   presto:
     platform: linux/amd64
-    image: prestodb
+    image: prestodb/presto
     hostname: presto
     container_name: presto
     volumes: 
@@ -463,11 +452,6 @@ services:
     volumes:
       - ./postgres/volume:/var/lib/postgresql/data
       - ./util:/util
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   adminer:
     image: adminer
@@ -489,12 +473,7 @@ services:
       - 13306:3306
     volumes:
       - ./mysql/db:/var/lib/mysql
-    healthcheck:
-      interval: 1s
-      retries: 5
-      start_period: 20s
-      test: mysqladmin ping -h mysql -u root --password=$$MYSQL_ROOT_PASSWORD
-      timeout: 5s
+
 
   mongo:
     image: mongo
@@ -544,10 +523,7 @@ services:
        - "10000:10000"
        - "10002:10002"
     depends_on:
-      metastore:
-          condition: service_healthy
-      minio:
-        condition: service_healthy
+      - metastore
     user: root
     volumes:
        - ./hive/conf:/hive_custom_conf
@@ -570,8 +546,8 @@ services:
     ports:
        - "9083:9083"
     depends_on:
-        db:
-          condition: service_healthy
+        - db
+          
     user: root
     volumes:
        - ./hive/meta:/opt/hive/data/warehouse 
@@ -593,12 +569,7 @@ services:
     volumes:
       - ./elasticsearch/esdata:/usr/share/elasticsearch/data
       - ./util:/util
-    healthcheck:
-      interval: 1s
-      retries: 3
-      start_period: 20s
-      test: curl -sS --fail http://elasticsearch:9200/_cluster/health?wait_for_status=yellow&timeout=0s
-      timeout: 5s
+
 
   cassandra:
     image: cassandra:latest
@@ -673,11 +644,7 @@ services:
         #user user@datalab.com.br pass datalab
       volumes:
         - ./util:/util
-      healthcheck:
-        test: curl --fail -I http://localhost:3000/api/health || exit 1
-        interval: 15s
-        timeout: 5s
-        retries: 5
+
       
   kibana:
     image: kibana:7.10.1
