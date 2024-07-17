@@ -95,12 +95,7 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    healthcheck:
-      interval: 5s
-      retries: 3
-      start_period: 30s
-      test: echo srvr | nc zookeeper 2181
-      timeout: 5s
+    
 
   kafka-broker:
     image: fjardim/mds-kafka-broker
@@ -109,8 +104,8 @@ services:
     ports:
       - "9092:9092"
     depends_on:
-      zookeeper:
-        condition: service_healthy
+      - zookeeper
+
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -128,32 +123,22 @@ services:
       CONFLUENT_METRICS_ENABLE: 'true'
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
       # AUTO_REGISTER_SCHEMAS : 'false'
-    healthcheck:
-      interval: 1s
-      retries: 5
-      start_period: 60s
-      test: nc -z kafka-broker 9092
-      timeout: 5s
+    
 
   kafka-schema-registry:
     image: fjardim/mds-kafka-schema-registry
     hostname: kafka-schema-registry
     container_name: kafka-schema-registry
     depends_on:
-      kafka-broker:
-        condition: service_healthy
+      - kafka-broker
+      
     ports:
       - "8071:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka-broker:9092'
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-    healthcheck:
-      interval: 1s
-      retries: 3
-      start_period: 60s
-      test: nc -z kafka-schema-registry 8081
-      timeout: 5s
+  
 
   kafka-connect:
     image: fjardim/mds-kafka-connect
@@ -617,6 +602,7 @@ services:
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
     volumes:
       - ./clickhouse/data:/var/lib/clickhouse/ 
+      - ./clickhouse/config/config.xml:/etc/clickhouse-server/config.d/storage.xml
       - ./util:/util
 
 ############################
