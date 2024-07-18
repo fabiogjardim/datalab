@@ -601,8 +601,8 @@ services:
       CLICKHOUSE_PASSWORD: "admin"
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
     volumes:
-      - ./clickhouse/data:/var/lib/clickhouse/ 
-      - ./clickhouse/config/config.xml:/etc/clickhouse-server/config.d/storage.xml
+      #- ./clickhouse/data:/var/lib/clickhouse/ 
+      #- ./clickhouse/config/config.xml:/etc/clickhouse-server/config.d/storage.xml
       - ./util:/util
 
 ############################
