@@ -32,6 +32,7 @@ services:
 ############################
   minio:
     image: minio/minio:latest
+    platform: linux/amd64
     container_name: minio
     entrypoint: sh
     command:   '-c ''mkdir -p /minio_data/raw && mkdir -p /minio_data/trusted && minio server /minio_data --console-address ":9001"'''
@@ -50,6 +51,7 @@ services:
 
   namenode:
     image: fjardim/mds-namenode
+    platform: linux/amd64
     container_name: namenode
     hostname: namenode
     volumes:
@@ -66,6 +68,7 @@ services:
   
   datanode:
     image: fjardim/mds-datanode
+    platform: linux/amd64
     container_name: datanode
     hostname: datanode
     volumes:
@@ -88,6 +91,7 @@ services:
 ############################
   zookeeper:
     image: fjardim/mds-kafka-zookeeper
+    platform: linux/amd64
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -99,6 +103,7 @@ services:
 
   kafka-broker:
     image: fjardim/mds-kafka-broker
+    platform: linux/amd64
     container_name: kafka-broker
     hostname: kafka-broker
     ports:
@@ -127,6 +132,7 @@ services:
 
   kafka-schema-registry:
     image: fjardim/mds-kafka-schema-registry
+    platform: linux/amd64
     hostname: kafka-schema-registry
     container_name: kafka-schema-registry
     depends_on:
@@ -142,6 +148,7 @@ services:
 
   kafka-connect:
     image: fjardim/mds-kafka-connect
+    platform: linux/amd64
     hostname: kafka-connect
     container_name: kafka-connect
     depends_on:
@@ -176,6 +183,7 @@ services:
           
   kafka-control-center:
     image: fjardim/mds-kafka-control-center
+    platform: linux/amd64
     hostname: kafka-control-center
     container_name: kafka-control-center
     depends_on:
@@ -202,6 +210,7 @@ services:
 
   kafka-ksqldb-server:
     image: fjardim/mds-kafka-ksqldb-server
+    platform: linux/amd64
     hostname: kafka-ksqldb-server
     container_name: kafka-ksqldb-server
     depends_on:
@@ -225,6 +234,7 @@ services:
 
   kafka-ksqldb-cli:
     image: fjardim/mds-kafka-sqldb-cli
+    platform: linux/amd64
     container_name: kafka-ksqldb-cli
     hostname: kafka-ksqldb-cli
     depends_on:
@@ -236,6 +246,7 @@ services:
   
   kafka-rest-proxy:
     image: fjardim/mds-kafka-rest
+    platform: linux/amd64
     hostname: kafka-rest-proxy
     depends_on:
       - kafka-broker
@@ -256,6 +267,7 @@ services:
 
   nifi:
       image: apache/nifi:latest
+      platform: linux/amd64
       container_name: nifi
       hostname: nifi
       volumes:
@@ -285,6 +297,7 @@ services:
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow-webserver
+    platform: linux/amd64
     hostname: airflow-webserver
     command: webserver
     ports:
@@ -304,6 +317,7 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow-scheduler
+    platform: linux/amd64
     hostname: airflow-scheduler
     command: scheduler
     healthcheck:
@@ -319,6 +333,7 @@ services:
   airflow-worker:
     <<: *airflow-common
     container_name: airflow-worker
+    platform: linux/amd64
     hostname: airflow-worker
     command: celery worker
     healthcheck:
@@ -342,6 +357,7 @@ services:
   airflow-triggerer:
     <<: *airflow-common
     container_name: airflow-triggerer
+    platform: linux/amd64
     hostname: airflow-triggerer
     command: triggerer
     healthcheck:
@@ -357,6 +373,7 @@ services:
   airflow-cli:
     <<: *airflow-common
     container_name: airflow-cli
+    platform: linux/amd64
     hostname: airflow-cli
     profiles:
       - debug
@@ -372,6 +389,7 @@ services:
   airflow-flower:
     <<: *airflow-common
     container_name: airflow-flower
+    platform: linux/amd64
     hostname: airflow-flower
     command: celery flower
     profiles:
@@ -392,6 +410,7 @@ services:
 
   redis:
     image: redis:latest
+    platform: linux/amd64
     container_name: redis
     hostname: redis
     expose:
@@ -425,6 +444,7 @@ services:
 
   db:
     image: postgres
+    platform: linux/amd64
     container_name: db
     hostname: db
     environment:
@@ -440,6 +460,7 @@ services:
 
   adminer:
     image: adminer
+    platform: linux/amd64
     container_name: adminer
     hostname: adminer
     ports:
@@ -447,6 +468,7 @@ services:
       
   mysql:
     image: mysql
+    platform: linux/amd64
     container_name: mysql
     # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
     # (this is just an example, not intended to be a production configuration)
@@ -462,6 +484,7 @@ services:
 
   mongo:
     image: mongo
+    platform: linux/amd64
     container_name: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
@@ -479,6 +502,7 @@ services:
 
   mongo-express:
     image: mongo-express
+    platform: linux/amd64
     container_name: mongo-express
     ports:
       - 28081:8081
@@ -495,6 +519,7 @@ services:
     hostname: hive
     #image: apache/hive:4.0.0-beta-1
     image: fjardim/mds-hive
+    platform: linux/amd64
     container_name: hive
     environment:
       AWS_ACCESS_KEY_ID: datalake
@@ -516,6 +541,7 @@ services:
           
   metastore:
     hostname: metastore
+    platform: linux/amd64
     image: fjardim/mds-hive-metastore
     #image: apache/hive:4.0.0-beta-1
     container_name: metastore
@@ -541,6 +567,7 @@ services:
 
   elasticsearch:
     image: elasticsearch:7.10.1
+    platform: linux/amd64
     container_name: elasticsearch
     hostname: elasticsearch
     ports:
@@ -558,6 +585,7 @@ services:
 
   cassandra:
     image: cassandra:latest
+    platform: linux/amd64
     container_name: cassandra
     hostname: cassandra
     environment:
@@ -576,6 +604,7 @@ services:
 
   cassandra-web:
     image: ipushc/cassandra-web
+    platform: linux/amd64
     container_name: cassandra-web
     depends_on:
       - cassandra
@@ -590,6 +619,7 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server
+    platform: linux/amd64
     container_name: clickhouse
     hostname: clickhouse
     ports:
@@ -611,6 +641,7 @@ services:
 
   metabase:
       image: metabase/metabase:latest
+      platform: linux/amd64
       container_name: metabase
       hostname: metabase
       ports:
@@ -634,6 +665,7 @@ services:
       
   kibana:
     image: kibana:7.10.1
+    platform: linux/amd64
     container_name: kibana
     hostname: kibana
     ports:
@@ -651,6 +683,7 @@ services:
 ##################################################
   spark-master:
     image: fjardim/mds-spark
+    platform: linux/amd64
     hostname: spark-master
     container_name: spark-master
     command: 
@@ -678,6 +711,7 @@ services:
 
   spark-worker:
     image: fjardim/mds-spark
+    platform: linux/amd64
     hostname: spark-worker
     container_name: spark-worker
     command: 
@@ -883,6 +917,7 @@ services:
 #####
   grafana:
     image: "grafana/grafana"
+    platform: linux/amd64
     ports:
      - "23000:3000"
     environment:
@@ -897,6 +932,7 @@ services:
 
   prometheus:
     image: "prom/prometheus"
+    platform: linux/amd64
     ports:
      - "9090:9090"
     volumes:
@@ -906,6 +942,7 @@ services:
 
   jmx-kafka-broker:
     image: "sscaling/jmx-prometheus-exporter"
+    platform: linux/amd64
     ports:
      - "5556:5556"
     environment:
@@ -919,6 +956,7 @@ services:
 
   zoonavigator:
     image: elkozmon/zoonavigator
+    platform: linux/amd64
     container_name: zoonavigator
     ports:
       - "8000:8000"
@@ -930,6 +968,7 @@ services:
 
   akhq:
     image: tchiotludo/akhq
+    platform: linux/amd64
     container_name: akhq
     environment:
       AKHQ_CONFIGURATION: |
@@ -947,6 +986,7 @@ services:
 
   kafka-net:
       image: fernandos/kafka-net
+      platform: linux/amd64
       container_name: kafkanet    
       environment:
           ASPNETCORE_ENVIRONMENT: Development
@@ -957,6 +997,7 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:20.0.2
+    platform: linux/amd64
     container_name: microcks-sso
     ports:
       - "18080:8080"
@@ -972,6 +1013,7 @@ services:
 
   postman:
     image: quay.io/microcks/microcks-postman-runtime:latest
+    platform: linux/amd64
     container_name: microcks-postman-runtime
 
   app:
@@ -981,6 +1023,7 @@ services:
       - postman
       - kafka-broker
     image: quay.io/microcks/microcks:1.7.1
+    platform: linux/amd64
     container_name: microcks
     volumes:
       - "./app/config:/deployments/config"
@@ -1006,6 +1049,7 @@ services:
     ports:
       - "38081:8081"
     image: quay.io/microcks/microcks-async-minion:1.7.1
+    platform: linux/amd64
     container_name: microcks-async-minion
     restart: on-failure
     volumes:
@@ -1014,7 +1058,8 @@ services:
       - QUARKUS_PROFILE=docker-compose
 
   connect:
-        image: fernandos/kafka-connet-debezium-lab    
+        image: fernandos/kafka-connet-debezium-lab  
+        platform: linux/amd64
         container_name: kafkaConect
         ports:
         - 8083:8083
@@ -1042,6 +1087,7 @@ services:
   pgadmin:
     container_name: pgadmin_container
     image: dpage/pgadmin4
+    platform: linux/amd64
     environment:
       PGADMIN_DEFAULT_EMAIL: lab-pgadmin4@pgadmin.org
       PGADMIN_DEFAULT_PASSWORD: admin    
