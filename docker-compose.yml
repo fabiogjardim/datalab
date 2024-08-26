@@ -647,8 +647,7 @@ services:
       ports:
         - 3000:3000
       depends_on:
-        db:
-          condition: service_healthy
+        - db
       environment:
         MB_DB_TYPE: postgres
         MB_DB_DBNAME: metabase
