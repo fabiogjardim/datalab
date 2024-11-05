@@ -443,7 +443,7 @@ services:
           #cpus: '0.2'
 
   db:
-    image: postgres
+    image: postgres:16
     platform: linux/amd64
     container_name: db
     hostname: db
